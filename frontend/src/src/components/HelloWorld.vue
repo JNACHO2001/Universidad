@@ -1,95 +1,93 @@
-<script setup>
-import { ref } from 'vue'
-import viteLogo from '../assets/vite.svg'
-import heroImg from '../assets/hero.png'
-import vueLogo from '../assets/vue.svg'
+﻿<template>
+  <div class="page">
 
-const count = ref(0)
-</script>
+    <!-- Formulario -->
+    <section class="register-card">
+      <h2>Registrar Usuario</h2>
+      <form class="register-form">
+        <div class="field">
+          <label for="nombre">Nombre</label>
+          <input id="nombre" type="text" placeholder="Ej. Alejandro" />
+        </div>
+        <div class="field">
+          <label for="apellido">Apellido</label>
+          <input id="apellido" type="text" placeholder="Ej. Rodriguez" />
+        </div>
+        <div class="field field--full">
+          <label for="correo">Correo</label>
+          <input id="correo" type="email" placeholder="alejandro@empresa.com" />
+        </div>
+        <div class="field field--full">
+          <label for="password">Contraseña</label>
+          <div class="password-wrapper">
+            <input id="password" type="password" placeholder="••••••••" />
+            <button type="button" class="toggle-password">
+              <span class="material-symbols-outlined">visibility</span>
+            </button>
+          </div>
+        </div>
+        <div class="field field--full form-actions">
+          <button type="submit" class="btn-primary">Registrar</button>
+        </div>
+      </form>
+    </section>
 
-<template>
-  <section id="center">
-    <div class="hero">
-      <img :src="heroImg" class="base" width="170" height="179" alt="" />
-      <img :src="vueLogo" class="framework" alt="Vue logo" />
-      <img :src="viteLogo" class="vite" alt="Vite logo" />
-    </div>
-    <div>
-      <h1>Get started</h1>
-      <p>Edit <code>src/App.vue</code> and save to test <code>HMR</code></p>
-    </div>
-    <button type="button" class="counter" @click="count++">
-      Count is {{ count }}
-    </button>
-  </section>
+    <!-- Tabla -->
+    <section class="directory-card">
+      <h2>User Directory</h2>
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Email</th>
+          
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="user-cell">
+               
+                Juan Delgado
+              </div>
+            </td>
+            <td>j.delgado@empresa.com</td>
+           
+            <td>
+              <button class="btn-edit" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+              <button class="btn-delete" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="user-cell">
+               
+                Maria Sanchez
+              </div>
+            </td>
+            <td>m.sanchez@empresa.com</td>
+            <td>
+              <button class="btn-edit" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+              <button class="btn-delete" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="user-cell">
+               
+                Roberto Perez
+              </div>
+            </td>
+            <td>r.perez@empresa.com</td>
+            <td>
+              <button class="btn-edit" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+              <button class="btn-delete" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
-  <div class="ticks"></div>
-
-  <section id="next-steps">
-    <div id="docs">
-      <svg class="icon" role="presentation" aria-hidden="true">
-        <use href="/icons.svg#documentation-icon"></use>
-      </svg>
-      <h2>Documentation</h2>
-      <p>Your questions, answered</p>
-      <ul>
-        <li>
-          <a href="https://vite.dev/" target="_blank">
-            <img class="logo" :src="viteLogo" alt="" />
-            Explore Vite
-          </a>
-        </li>
-        <li>
-          <a href="https://vuejs.org/" target="_blank">
-            <img class="button-icon" :src="vueLogo" alt="" />
-            Learn more
-          </a>
-        </li>
-      </ul>
-    </div>
-    <div id="social">
-      <svg class="icon" role="presentation" aria-hidden="true">
-        <use href="/icons.svg#social-icon"></use>
-      </svg>
-      <h2>Connect with us</h2>
-      <p>Join the Vite community</p>
-      <ul>
-        <li>
-          <a href="https://github.com/vitejs/vite" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#github-icon"></use>
-            </svg>
-            GitHub
-          </a>
-        </li>
-        <li>
-          <a href="https://chat.vite.dev/" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#discord-icon"></use>
-            </svg>
-            Discord
-          </a>
-        </li>
-        <li>
-          <a href="https://x.com/vite_js" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#x-icon"></use>
-            </svg>
-            X.com
-          </a>
-        </li>
-        <li>
-          <a href="https://bsky.app/profile/vite.dev" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#bluesky-icon"></use>
-            </svg>
-            Bluesky
-          </a>
-        </li>
-      </ul>
-    </div>
-  </section>
-
-  <div class="ticks"></div>
-  <section id="spacer"></section>
+  </div>
 </template>
