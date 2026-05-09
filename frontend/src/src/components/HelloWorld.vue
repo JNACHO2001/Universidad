@@ -1,4 +1,19 @@
-﻿<template>
+﻿<script setup>
+import { ref, onMounted } from 'vue'
+import { obtenerUsuarios } from '../api/api'
+
+const Usuarios = ref([])
+
+onMounted(async () => {
+  try {
+    Usuarios.value = await obtenerUsuarios()
+  } catch (e) {
+    console.error(e)
+  }
+})
+</script>
+
+<template>
   <div class="page">
 
     <!-- Formulario -->
@@ -40,46 +55,17 @@
           <tr>
             <th>Usuario</th>
             <th>Email</th>
-          
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <tr v-for="Usuario in Usuarios" :key="Usuario.id">
             <td>
               <div class="user-cell">
-               
-                Juan Delgado
+                {{ Usuario.nombre }}
               </div>
             </td>
-            <td>j.delgado@empresa.com</td>
-           
-            <td>
-              <button class="btn-edit" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-              <button class="btn-delete" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div class="user-cell">
-               
-                Maria Sanchez
-              </div>
-            </td>
-            <td>m.sanchez@empresa.com</td>
-            <td>
-              <button class="btn-edit" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-              <button class="btn-delete" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div class="user-cell">
-               
-                Roberto Perez
-              </div>
-            </td>
-            <td>r.perez@empresa.com</td>
+            <td>{{ Usuario.correo }}</td>
             <td>
               <button class="btn-edit" title="Editar"><span class="material-symbols-outlined">edit</span></button>
               <button class="btn-delete" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
@@ -91,3 +77,4 @@
 
   </div>
 </template>
+
