@@ -129,6 +129,19 @@ input  { font-family: inherit; font-size: 14px; outline: none; }
 .btn-primary:hover  { background-color: #2b1fb5; }
 .btn-primary:active { transform: scale(0.95); }
 
+.btn-cancelar {
+  background-color: var(--error);
+  color: #fff;
+  height: 40px;
+  padding: 0 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s, transform 0.1s;
+}
+.btn-cancelar:hover  { background-color: #8b0000; }
+.btn-cancelar:active { transform: scale(0.95); }
+
 /* ── Table ─────────────────────────────────────────────── */
 .user-table {
   width: 100%;

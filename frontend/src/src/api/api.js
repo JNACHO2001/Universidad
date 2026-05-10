@@ -14,14 +14,21 @@ export const crearUsuario = async (usuario) => {
   return data;
 };
 
-export const editarUsuario = async (correo) => {
+export const editarUsuario = async (correo,usuarioActualizado) => {
   const respuesta = await fetch(`${api}/usuarios/${correo}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(usuarioActualizado),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error("error al actulizar usuario")
     
+    
+  }
 
-
-
-
-  })
+  const data = await respuesta.json();
+  return data;
   
 }
 

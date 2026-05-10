@@ -1,38 +1,66 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { obtenerUsuarios, eliminarUsuario, crearUsuario } from "../api/api";
+import {
+  obtenerUsuarios,
+  eliminarUsuario,
+  crearUsuario,
+  editarUsuario,
+} from "../api/api";
 
 const Usuarios = ref([]);
+const modoedicion = ref(false);
+
+const seleccionarUsuario = (datosUsuario) => {
+  usuario.value = { ...datosUsuario };
+  modoedicion.value = true;
+};
+
+const limpiarFormulario = () => {
+  usuario.value = {
+    nombre: "",
+    apellido: "",
+    correo: "",
+    contraseña: "",
+  };
+
+  modoedicion.value = false;
+};
 
 const usuario = ref({
   nombre: "",
   apellido: "",
   correo: "",
-  contraseña: ""
-})
+  contraseña: "",
+});
 
 const cargarUsuarios = async () => {
   Usuarios.value = await obtenerUsuarios();
-}
+};
 
 const guardarUsuario = async () => {
   try {
-    await crearUsuario(usuario.value)
-    usuario.value = { nombre: "", apellido: "", correo: "", contraseña: "" }
-    await cargarUsuarios()
+    if (modoedicion.value) {
+      const correo = usuario.value.correo;
+      const respuesta = await editarUsuario(correo, usuario.value);
+      await cargarUsuarios();
+    } else {
+      await crearUsuario(usuario.value);
+    }
+
+    limpiarFormulario();
   } catch (error) {
     console.error(error);
   }
-}
+};
 
 const eliminar = async (correo) => {
   try {
     await eliminarUsuario(correo);
-    Usuarios.value = Usuarios.value.filter(u => u.correo !== correo);
+    Usuarios.value = Usuarios.value.filter((u) => u.correo !== correo);
   } catch (error) {
     console.error(error);
   }
-}
+};
 
 onMounted(async () => {
   try {
@@ -51,27 +79,52 @@ onMounted(async () => {
       <form class="register-form" @submit.prevent="guardarUsuario">
         <div class="field">
           <label for="nombre">Nombre</label>
-          <input id="nombre" type="text" placeholder="Ej. Alejandro" v-model="usuario.nombre" />
+          <input
+            id="nombre"
+            type="text"
+            placeholder="Ej. Alejandro"
+            v-model="usuario.nombre"
+          />
         </div>
         <div class="field">
           <label for="apellido">Apellido</label>
-          <input id="apellido" type="text" placeholder="Ej. Rodriguez" v-model="usuario.apellido"/>
+          <input
+            id="apellido"
+            type="text"
+            placeholder="Ej. Rodriguez"
+            v-model="usuario.apellido"
+          />
         </div>
         <div class="field field--full">
           <label for="correo">Correo</label>
-          <input id="correo" type="email" placeholder="alejandro@empresa.com" v-model="usuario.correo" />
+          <input
+            id="correo"
+            type="email"
+            placeholder="alejandro@empresa.com"
+            v-model="usuario.correo"
+          />
         </div>
         <div class="field field--full">
           <label for="password">Contraseña</label>
           <div class="password-wrapper">
-            <input id="password" type="password" placeholder="••••••••" v-model="usuario.contraseña"/>
+            <input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              v-model="usuario.contraseña"
+            />
             <button type="button" class="toggle-password">
               <span class="material-symbols-outlined">visibility</span>
             </button>
           </div>
         </div>
         <div class="field field--full form-actions">
-          <button type="submit" class="btn-primary">Registrar</button>
+          <button v-if="modoedicion" type="button" class="btn-cancelar" @click="limpiarFormulario">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary">
+            {{ modoedicion ? "Actualizar usuario" : "Registrar usuario" }}
+          </button>
         </div>
       </form>
     </section>
@@ -98,7 +151,7 @@ onMounted(async () => {
             <td>{{ Usuario.apellido }}</td>
             <td>{{ Usuario.correo }}</td>
             <td>
-              <button class="btn-edit" title="Editar">
+              <button type="button" class="btn-edit" title="Editar" @click="seleccionarUsuario(Usuario)">
                 <span class="material-symbols-outlined">edit</span>
               </button>
               <button
