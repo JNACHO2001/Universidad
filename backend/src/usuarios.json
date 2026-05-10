@@ -1,14 +1,1 @@
-[
-    {
-        "nombre": "string",
-        "apellido": "string",
-        "correo": "string",
-        "contraseña": "string"
-    },
-    {
-        "nombre": "jose gomez",
-        "apellido": "string",
-        "correo": "jose gomez",
-        "contraseña": "string"
-    }
-]
+[]

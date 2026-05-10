@@ -40,8 +40,7 @@ def eliminar(correo:str):
 def mostrar_Usuarios():
     try:
         datos = servicio.mostrarUsuarios()
-        if datos:
-            return {"mensaje":"datos obnetidos correctamente ","data":datos}
+        return {"mensaje": "datos obtenidos correctamente", "data": datos or []}
             
         
 
