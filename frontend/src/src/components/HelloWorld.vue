@@ -1,28 +1,38 @@
-﻿<script setup>
+<script setup>
 import { ref, onMounted } from "vue";
-import { obtenerUsuarios, eliminarUsuario } from "../api/api";
+import { obtenerUsuarios, eliminarUsuario, crearUsuario } from "../api/api";
 
 const Usuarios = ref([]);
 
+const usuario = ref({
+  nombre: "",
+  apellido: "",
+  correo: "",
+  contraseña: ""
+})
 
+const cargarUsuarios = async () => {
+  Usuarios.value = await obtenerUsuarios();
+}
+
+const guardarUsuario = async () => {
+  try {
+    await crearUsuario(usuario.value)
+    usuario.value = { nombre: "", apellido: "", correo: "", contraseña: "" }
+    await cargarUsuarios()
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 const eliminar = async (correo) => {
-  const confirmar = confirm(`Desea eliminar este usuario ${correo} `);
-
-  if (!confirmar) {
-    return;
-  }
-
   try {
     await eliminarUsuario(correo);
-    Usuarios.value = Usuarios.value.filter(
-      (usuario) => usuario.correo !== correo,
-    );
-    alert("se elimino correctamente ");
+    Usuarios.value = Usuarios.value.filter(u => u.correo !== correo);
   } catch (error) {
-    console.error(e);
+    console.error(error);
   }
-};
+}
 
 onMounted(async () => {
   try {
@@ -38,23 +48,23 @@ onMounted(async () => {
     <!-- Formulario -->
     <section class="register-card">
       <h2>Registrar Usuario</h2>
-      <form class="register-form">
+      <form class="register-form" @submit.prevent="guardarUsuario">
         <div class="field">
           <label for="nombre">Nombre</label>
-          <input id="nombre" type="text" placeholder="Ej. Alejandro" />
+          <input id="nombre" type="text" placeholder="Ej. Alejandro" v-model="usuario.nombre" />
         </div>
         <div class="field">
           <label for="apellido">Apellido</label>
-          <input id="apellido" type="text" placeholder="Ej. Rodriguez" />
+          <input id="apellido" type="text" placeholder="Ej. Rodriguez" v-model="usuario.apellido"/>
         </div>
         <div class="field field--full">
           <label for="correo">Correo</label>
-          <input id="correo" type="email" placeholder="alejandro@empresa.com" />
+          <input id="correo" type="email" placeholder="alejandro@empresa.com" v-model="usuario.correo" />
         </div>
         <div class="field field--full">
           <label for="password">Contraseña</label>
           <div class="password-wrapper">
-            <input id="password" type="password" placeholder="••••••••" />
+            <input id="password" type="password" placeholder="••••••••" v-model="usuario.contraseña"/>
             <button type="button" class="toggle-password">
               <span class="material-symbols-outlined">visibility</span>
             </button>
@@ -92,6 +102,7 @@ onMounted(async () => {
                 <span class="material-symbols-outlined">edit</span>
               </button>
               <button
+                type="button"
                 class="btn-delete"
                 title="Eliminar"
                 @click="eliminar(Usuario.correo)"

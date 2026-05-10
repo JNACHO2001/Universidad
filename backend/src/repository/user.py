@@ -59,14 +59,14 @@ class UserReposotory:
         self._escribir_archivo(datos)
         return usuario
     
-    def eliminar(self, correo:str):
+    def eliminar(self, correo: str):
         datos = self._leer_archivo()
         for i, d in enumerate(datos):
             if d["correo"] == correo:
-               usuario_eliminado = datos.pop(i)
-               self._escribir_archivo(datos)
-        
-        return usuario_eliminado
+                usuario_eliminado = datos.pop(i)
+                self._escribir_archivo(datos)
+                return usuario_eliminado
+        return None
         
 
 
