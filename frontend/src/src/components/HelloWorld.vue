@@ -7,16 +7,23 @@ import {
   editarUsuario,
 } from "../api/api";
 
+// Lista reactiva de usuarios que alimenta la tabla
 const Usuarios = ref([]);
+
+// Controla si el formulario está en modo edición o creación
 const modoedicion = ref(false);
+
+// Mensajes de feedback visibles al usuario tras cada operación
 const mensajeError = ref("");
 const mensajeExito = ref("");
 
+// Copia los datos del usuario seleccionado al formulario y activa modo edición
 const seleccionarUsuario = (datosUsuario) => {
   usuario.value = { ...datosUsuario };
   modoedicion.value = true;
 };
 
+// Vacía el formulario y vuelve al modo creación
 const limpiarFormulario = () => {
   usuario.value = {
     nombre: "",
@@ -24,10 +31,10 @@ const limpiarFormulario = () => {
     correo: "",
     contraseña: "",
   };
-
   modoedicion.value = false;
 };
 
+// Modelo del formulario enlazado con v-model
 const usuario = ref({
   nombre: "",
   apellido: "",
@@ -35,10 +42,12 @@ const usuario = ref({
   contraseña: "",
 });
 
+// Recarga la tabla desde el backend
 const cargarUsuarios = async () => {
   Usuarios.value = await obtenerUsuarios();
 };
 
+// Crea o actualiza un usuario según el modo activo, luego limpia el formulario
 const guardarUsuario = async () => {
   mensajeError.value = "";
   mensajeExito.value = "";
@@ -54,10 +63,12 @@ const guardarUsuario = async () => {
     }
     limpiarFormulario();
   } catch (error) {
+    // El mensaje viene del backend via manejarError en api.js
     mensajeError.value = error.message;
   }
 };
 
+// Elimina el usuario y lo quita de la lista local sin recargar toda la tabla
 const eliminar = async (correo) => {
   mensajeError.value = "";
   mensajeExito.value = "";
@@ -70,6 +81,7 @@ const eliminar = async (correo) => {
   }
 };
 
+// Carga los usuarios al montar el componente por primera vez
 onMounted(async () => {
   try {
     Usuarios.value = await obtenerUsuarios();
@@ -81,11 +93,11 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <!-- Mensajes -->
+    <!-- Mensajes de feedback -->
     <p v-if="mensajeExito" class="msg msg--exito">{{ mensajeExito }}</p>
     <p v-if="mensajeError" class="msg msg--error">{{ mensajeError }}</p>
 
-    <!-- Formulario -->
+    <!-- Formulario: sirve tanto para crear como para editar según modoedicion -->
     <section class="register-card">
       <h2>Registrar Usuario</h2>
       <form class="register-form" @submit.prevent="guardarUsuario">
@@ -131,9 +143,11 @@ onMounted(async () => {
           </div>
         </div>
         <div class="field field--full form-actions">
+          <!-- Solo aparece en modo edición para cancelar sin guardar -->
           <button v-if="modoedicion" type="button" class="btn-cancelar" @click="limpiarFormulario">
             Cancelar
           </button>
+          <!-- El texto cambia según el modo activo -->
           <button type="submit" class="btn-primary">
             {{ modoedicion ? "Actualizar usuario" : "Registrar usuario" }}
           </button>
@@ -141,7 +155,7 @@ onMounted(async () => {
       </form>
     </section>
 
-    <!-- Tabla -->
+    <!-- Tabla de usuarios con acciones de editar y eliminar -->
     <section class="directory-card">
       <h2>User Directory</h2>
       <table class="user-table">
@@ -163,9 +177,11 @@ onMounted(async () => {
             <td>{{ Usuario.apellido }}</td>
             <td>{{ Usuario.correo }}</td>
             <td>
+              <!-- Carga el usuario en el formulario para editar -->
               <button type="button" class="btn-edit" title="Editar" @click="seleccionarUsuario(Usuario)">
                 <span class="material-symbols-outlined">edit</span>
               </button>
+              <!-- Elimina directamente sin confirmación -->
               <button
                 type="button"
                 class="btn-delete"

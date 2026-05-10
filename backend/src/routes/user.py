@@ -3,11 +3,14 @@ from services.user import UserService
 from models.user import User
 from dto.response import CreateUserRequest
 
+# Todas las rutas de este archivo tienen el prefijo /usuarios
 router = APIRouter(prefix="/usuarios")
 
 servicio = UserService()
 
 
+# POST /usuarios — crea un nuevo usuario
+# Retorna 400 si los datos son inválidos o el correo ya existe
 @router.post("")
 def crear_usuario(data: CreateUserRequest):
     try:
@@ -18,6 +21,8 @@ def crear_usuario(data: CreateUserRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# PUT /usuarios/{correo} — actualiza los datos de un usuario existente
+# Retorna 404 si el correo no se encuentra
 @router.put("/{correo}")
 def actualizar_usuario(correo: str, data: CreateUserRequest):
     try:
@@ -25,25 +30,25 @@ def actualizar_usuario(correo: str, data: CreateUserRequest):
         return {"mensaje": "Usuario actualizado correctamente"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    
+
+
+# DELETE /usuarios/{correo} — elimina un usuario por su correo
+# Retorna 404 si el correo no se encuentra
 @router.delete("/{correo}")
-def eliminar(correo:str):
+def eliminar(correo: str):
     try:
         servicio.eliminarUsuario(correo)
         return {"mensaje": "Usuario eliminado correctamente"}
-    
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    
 
+
+# GET /usuarios — retorna la lista completa de usuarios
+# Retorna 404 si no hay ningún usuario registrado
 @router.get("")
 def mostrar_Usuarios():
     try:
         datos = servicio.mostrarUsuarios()
         return {"mensaje": "datos obtenidos correctamente", "data": datos or []}
-            
-        
-
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-

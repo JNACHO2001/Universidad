@@ -2,65 +2,44 @@ from repository.user import UserReposotory
 from models.user import User
 
 
+# Capa de negocio: aplica validaciones antes de delegar al repositorio
 class UserService:
 
     def __init__(self):
         self.repo = UserReposotory()
-        
 
-
-
-    def crearUsuario(self, user:User):
+    # Valida campos obligatorios y que el correo no esté duplicado antes de guardar
+    def crearUsuario(self, user: User):
         if not user.nombre or not user.apellido:
-            raise ValueError("Los campos  no deben estar vacios ")
-        
+            raise ValueError("Los campos no deben estar vacíos")
+
         if not user.correo:
-            raise ValueError("el campo no pude estar vacio")
-        
+            raise ValueError("El campo correo no puede estar vacío")
+
         if not user.contraseña or len(user.contraseña) < 6:
-            raise ValueError("no nay contraseña o debe ser mas de 6 caracteres ")
-        
+            raise ValueError("La contraseña debe tener al menos 6 caracteres")
 
-        existe = self.repo.buscar_por_correo(user.correo)
-        if   existe:
-            raise ValueError("el correo ya esta en la base de datos")
-        
-       
+        if self.repo.buscar_por_correo(user.correo):
+            raise ValueError("El correo ya está registrado")
+
         self.repo.guardar(user)
-        print ("el usuario ha sido creado")    
         return user
-    
 
+    # Verifica que el usuario exista antes de actualizar
     def actualizarUsuario(self, correo: str, datosnuevos):
-        existe = self.repo.buscar_por_correo(correo)
-        if not existe:
-            raise ValueError("no se encontro el usuario")
+        if not self.repo.buscar_por_correo(correo):
+            raise ValueError("No se encontró el usuario")
         return self.repo.actualizar(correo, User.from_dict(datosnuevos))
-    
+
+    # Verifica que el usuario exista antes de eliminar
     def eliminarUsuario(self, correo: str):
-        existe = self.repo.buscar_por_correo(correo)
-        if not existe:
-            raise ValueError("no se encontro el usuario")
+        if not self.repo.buscar_por_correo(correo):
+            raise ValueError("No se encontró el usuario")
         return self.repo.eliminar(correo)
-    
 
+    # Lanza ValueError si la lista está vacía para que la ruta retorne 404
     def mostrarUsuarios(self):
-        usuarios =self.repo.obtener_todos()
+        usuarios = self.repo.obtener_todos()
         if not usuarios:
-            raise ValueError("no hay datos",usuarios)
+            raise ValueError("No hay usuarios registrados")
         return usuarios
-
-            
-
-        
-        
-
-    
-
-
-
-
-
-
-
-
