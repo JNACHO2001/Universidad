@@ -14,6 +14,17 @@ export const crearUsuario = async (usuario) => {
   return data;
 };
 
+export const editarUsuario = async (correo) => {
+  const respuesta = await fetch(`${api}/usuarios/${correo}`, {
+    
+
+
+
+
+  })
+  
+}
+
 export const obtenerUsuarios = async () => {
   const respuesta = await fetch(`${api}/usuarios`);
   if (!respuesta.ok) throw new Error("No se encontraron usuarios");
