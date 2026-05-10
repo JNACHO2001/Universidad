@@ -4,6 +4,8 @@ import { obtenerUsuarios, eliminarUsuario } from "../api/api";
 
 const Usuarios = ref([]);
 
+
+
 const eliminar = async (correo) => {
   const confirmar = confirm(`Desea eliminar este usuario ${correo} `);
 
