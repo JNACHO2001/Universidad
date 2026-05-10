@@ -9,6 +9,8 @@ import {
 
 const Usuarios = ref([]);
 const modoedicion = ref(false);
+const mensajeError = ref("");
+const mensajeExito = ref("");
 
 const seleccionarUsuario = (datosUsuario) => {
   usuario.value = { ...datosUsuario };
@@ -38,27 +40,33 @@ const cargarUsuarios = async () => {
 };
 
 const guardarUsuario = async () => {
+  mensajeError.value = "";
+  mensajeExito.value = "";
   try {
     if (modoedicion.value) {
-      const correo = usuario.value.correo;
-      const respuesta = await editarUsuario(correo, usuario.value);
+      await editarUsuario(usuario.value.correo, usuario.value);
       await cargarUsuarios();
+      mensajeExito.value = "Usuario actualizado correctamente";
     } else {
       await crearUsuario(usuario.value);
+      await cargarUsuarios();
+      mensajeExito.value = "Usuario creado correctamente";
     }
-
     limpiarFormulario();
   } catch (error) {
-    console.error(error);
+    mensajeError.value = error.message;
   }
 };
 
 const eliminar = async (correo) => {
+  mensajeError.value = "";
+  mensajeExito.value = "";
   try {
     await eliminarUsuario(correo);
     Usuarios.value = Usuarios.value.filter((u) => u.correo !== correo);
+    mensajeExito.value = "Usuario eliminado correctamente";
   } catch (error) {
-    console.error(error);
+    mensajeError.value = error.message;
   }
 };
 
@@ -73,6 +81,10 @@ onMounted(async () => {
 
 <template>
   <div class="page">
+    <!-- Mensajes -->
+    <p v-if="mensajeExito" class="msg msg--exito">{{ mensajeExito }}</p>
+    <p v-if="mensajeError" class="msg msg--error">{{ mensajeError }}</p>
+
     <!-- Formulario -->
     <section class="register-card">
       <h2>Registrar Usuario</h2>

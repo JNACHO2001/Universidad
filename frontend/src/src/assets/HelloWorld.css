@@ -129,6 +129,15 @@ input  { font-family: inherit; font-size: 14px; outline: none; }
 .btn-primary:hover  { background-color: #2b1fb5; }
 .btn-primary:active { transform: scale(0.95); }
 
+.msg {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.msg--exito { background-color: #d4edda; color: #155724; }
+.msg--error { background-color: var(--error-bg); color: var(--error); }
+
 .btn-cancelar {
   background-color: var(--error);
   color: #fff;

@@ -1,14 +1,17 @@
 ﻿const api = "http://127.0.0.1:8000";
 
+const manejarError = async (respuesta) => {
+  const json = await respuesta.json().catch(() => ({}));
+  throw new Error(json.detail ?? "Error en el servidor");
+};
+
 export const crearUsuario = async (usuario) => {
   const respuesta = await fetch(`${api}/usuarios`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(usuario),
   });
-  if (!respuesta.ok) {
-    throw new Error("No se pudo crear el usuario");
-  }
+  if (!respuesta.ok) await manejarError(respuesta);
 
   const data = await respuesta.json();
   return data;
@@ -21,11 +24,7 @@ export const editarUsuario = async (correo,usuarioActualizado) => {
     body: JSON.stringify(usuarioActualizado),
   });
 
-  if (!respuesta.ok) {
-    throw new Error("error al actulizar usuario")
-    
-    
-  }
+  if (!respuesta.ok) await manejarError(respuesta);
 
   const data = await respuesta.json();
   return data;
@@ -34,7 +33,7 @@ export const editarUsuario = async (correo,usuarioActualizado) => {
 
 export const obtenerUsuarios = async () => {
   const respuesta = await fetch(`${api}/usuarios`);
-  if (!respuesta.ok) throw new Error("No se encontraron usuarios");
+  if (!respuesta.ok) await manejarError(respuesta);
   const json = await respuesta.json();
   return json.data ?? [];
 };
@@ -43,9 +42,7 @@ export const eliminarUsuario = async (correo) => {
     method: "DELETE",
   });
 
-  if (!respuesta.ok) {
-    throw new Error("No se encontro el usuario");
-  }
+  if (!respuesta.ok) await manejarError(respuesta);
 
   const data = await respuesta.json();
   return data;
