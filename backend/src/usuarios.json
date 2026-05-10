@@ -1,8 +1,14 @@
 [
     {
-        "nombre": "jose ",
-        "apellido": "gomez",
-        "correo": "joseesapel@gmail.com",
+        "nombre": "fercho",
+        "apellido": "taru",
+        "correo": "fercho@gmail.com",
+        "contraseña": "5456112"
+    },
+    {
+        "nombre": "juan",
+        "apellido": "fermin",
+        "correo": "joseesapelgmail.com",
         "contraseña": "123456"
     }
 ]
