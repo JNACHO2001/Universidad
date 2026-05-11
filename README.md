@@ -28,39 +28,176 @@ Fue desarrollado con fines académicos para explorar patrones de diseño REST, s
 
 ## Arquitectura del proyecto
 
+### Visión general
+
+El proyecto está dividido en dos aplicaciones independientes que se comunican a través de HTTP:
+
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     CLIENTE (Browser)                    │
-│                                                          │
-│   ┌───────────────────────────────────────────────────┐  │
-│   │                  Vue 3 + Vite                     │  │
-│   │  App.vue → HelloWorld.vue  ←→  api.js (fetch)    │  │
-│   └───────────────────┬───────────────────────────────┘  │
-└───────────────────────│─────────────────────────────────┘
-                        │ HTTP / JSON  (localhost:5173 → 8000)
-┌───────────────────────│─────────────────────────────────┐
-│                SERVER (FastAPI + Uvicorn)                │
-│                                                          │
-│   ┌──────────┐   ┌──────────┐   ┌────────────┐          │
-│   │  Routes  │ → │ Services │ → │ Repository │          │
-│   │ /usuarios│   │ Validación│  │ JSON file  │          │
-│   └──────────┘   └──────────┘   └─────┬──────┘          │
-│                                        │                 │
-│                               ┌────────▼───────┐        │
-│                               │  usuarios.json │        │
-│                               └────────────────┘        │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                      CLIENTE (Browser)                        │
+│                                                               │
+│   ┌─────────────────────────────────────────────────────┐    │
+│   │                    Vue 3 + Vite                      │    │
+│   │                                                      │    │
+│   │   main.js                                            │    │
+│   │     └── App.vue          (componente raíz)           │    │
+│   │           └── HelloWorld.vue  (lógica CRUD + UI)     │    │
+│   │                 └── api/api.js  (cliente HTTP)        │    │
+│   └──────────────────────┬──────────────────────────────┘    │
+└─────────────────────────│────────────────────────────────────┘
+                           │  fetch() — HTTP/JSON
+                           │  localhost:5173  →  localhost:8000
+┌─────────────────────────│────────────────────────────────────┐
+│                SERVER   │  (FastAPI + Uvicorn)                │
+│                          │                                    │
+│   main.py ──────────────▼──────────────────────────────┐    │
+│   (punto de entrada,     │                               │    │
+│    CORS, registro        ▼                               │    │
+│    de routers)     routes/user.py                        │    │
+│                    (recibe HTTP,                         │    │
+│                     llama al servicio)                   │    │
+│                          │                               │    │
+│                          ▼                               │    │
+│                    services/user.py                      │    │
+│                    (valida reglas                        │    │
+│                     de negocio)                          │    │
+│                          │                               │    │
+│                          ▼                               │    │
+│                    repository/user.py                    │    │
+│                    (lee y escribe                        │    │
+│                     el archivo JSON)                     │    │
+│                          │                               │    │
+│                          ▼                               │    │
+│                    usuarios.json                         │    │
+│                    (base de datos)                       │    │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Capas del backend
+---
 
-| Capa | Archivo | Responsabilidad |
-|------|---------|-----------------|
-| Routes | `routes/user.py` | Recibir peticiones HTTP y retornar respuestas |
-| Services | `services/user.py` | Lógica de negocio y validaciones de dominio |
-| Repository | `repository/user.py` | Lectura y escritura en el archivo JSON |
-| Models | `models/user.py` | Definición de la entidad `User` |
-| DTO | `dto/response.py` | Validación de datos de entrada con Pydantic |
+### Por qué esta arquitectura en capas
+
+El backend sigue el patrón **Layered Architecture** (arquitectura por capas). La idea central es que **cada capa solo conoce a la capa inmediatamente inferior**, nunca salta capas ni se mezcla con responsabilidades ajenas.
+
+Esto resuelve un problema concreto: si todo el código estuviera junto en un solo archivo, cambiar cómo se guardan los datos (por ejemplo, pasar de JSON a una base de datos real) obligaría a tocar también la lógica de validación y las rutas HTTP. Con capas separadas, ese cambio ocurre en un solo lugar.
+
+---
+
+### Descripción de cada capa y archivo
+
+#### `main.py` — Punto de entrada y configuración global
+
+Es el archivo que arranca la aplicación. Sus únicas responsabilidades son:
+
+1. Crear la instancia de FastAPI.
+2. Configurar CORS para permitir que el frontend (puerto 5173) hable con el backend (puerto 8000) sin que el navegador lo bloquee.
+3. Registrar los routers (grupos de endpoints) que están definidos en otras capas.
+
+No contiene lógica de negocio ni acceso a datos. Si en el futuro se agregan más módulos (productos, pedidos, etc.), solo se registran aquí sus routers, sin tocar nada más.
+
+---
+
+#### `dto/response.py` — Validación de entrada (Data Transfer Object)
+
+Un DTO es el "contrato" que define exactamente qué datos debe enviar el cliente para que una operación sea válida. Usando Pydantic, FastAPI valida automáticamente el cuerpo de cada petición antes de que llegue a cualquier otra parte del código.
+
+**¿Por qué existe esta capa separada?**  
+Porque la validación de *formato* (¿vienen todos los campos? ¿son del tipo correcto?) es distinta de la validación de *negocio* (¿ya existe este correo? ¿la contraseña cumple la política?). Mezclarlas genera código difícil de mantener. El DTO solo se preocupa por el formato; las reglas de negocio viven en el servicio.
+
+Si FastAPI detecta que el cliente no cumple el DTO, retorna automáticamente un `422` con el detalle del error, sin que el desarrollador tenga que escribir esa lógica.
+
+---
+
+#### `models/user.py` — Entidad de dominio
+
+Define la estructura interna de un usuario tal como el sistema lo entiende. Es la representación pura del dato, sin lógica de HTTP ni de base de datos.
+
+**¿Por qué existe separado del DTO?**  
+El DTO representa lo que *entra* por la red. El modelo representa lo que *vive* dentro del sistema. Pueden diferir: en el futuro el modelo podría tener campos calculados, timestamps o un ID generado internamente que el cliente nunca envía. Tener ambos separados permite evolucionar uno sin afectar el otro.
+
+---
+
+#### `services/user.py` — Lógica de negocio
+
+Es el cerebro de la aplicación. Aquí viven las reglas que hacen que este sistema sea un gestor de usuarios y no cualquier otra cosa:
+
+- ¿El correo ya está registrado? → error.
+- ¿La contraseña tiene al menos 6 caracteres? → error.
+- ¿El usuario a editar existe? → si no, error 404.
+
+**¿Por qué no poner estas validaciones en la ruta o en el repositorio?**  
+Porque las reglas de negocio son independientes tanto del protocolo de transporte (HTTP) como del mecanismo de almacenamiento (JSON, base de datos). Si mañana la aplicación expone una CLI o un worker de tareas, el servicio puede reutilizarse sin cambios. Si se cambia de JSON a PostgreSQL, las reglas siguen siendo las mismas y no hay que reescribirlas.
+
+---
+
+#### `repository/user.py` — Acceso a datos
+
+Es la única capa que sabe que los datos están en un archivo JSON. Lee el archivo, lo deserializa, hace la operación (crear, buscar, actualizar, eliminar) y lo vuelve a escribir.
+
+**¿Por qué aislar esto?**  
+Porque el almacenamiento es un detalle de implementación. Si en el futuro se decide usar una base de datos real, solo se reescribe este archivo. El servicio y las rutas no se enteran del cambio porque el repositorio les sigue entregando los mismos objetos `User`. Este principio se llama **inversión de dependencias**: las capas superiores dependen de una interfaz (qué hace el repositorio), no de cómo lo hace.
+
+---
+
+#### `routes/user.py` — Endpoints HTTP
+
+Define los cuatro endpoints del recurso `/usuarios` (GET, POST, PUT, DELETE). Su trabajo es:
+
+1. Recibir la petición HTTP.
+2. Llamar al servicio correspondiente con los datos ya validados por el DTO.
+3. Devolver la respuesta HTTP con el código de estado correcto.
+
+La ruta no valida reglas de negocio ni toca datos directamente. Solo traduce entre el mundo HTTP y el mundo de la lógica de la aplicación. Esto la hace fácil de probar y de reemplazar (si se cambia FastAPI por otro framework, solo se reescribe esta capa).
+
+---
+
+### Flujo completo de una petición
+
+A continuación se muestra el recorrido de una petición **POST /usuarios** desde el navegador hasta el archivo JSON y de regreso:
+
+```
+Navegador
+  │
+  │  POST /usuarios  { nombre, apellido, correo, contraseña }
+  ▼
+routes/user.py
+  │  FastAPI valida el body contra CreateUserRequest (DTO)
+  │  Si el formato es inválido → responde 422 automáticamente
+  │  Si es válido → llama a user_service.crear_usuario(data)
+  ▼
+services/user.py
+  │  ¿Correo ya existe?     → lanza HTTPException 400
+  │  ¿Contraseña < 6 chars? → lanza HTTPException 400
+  │  ¿Campos vacíos?        → lanza HTTPException 400
+  │  Todo OK → llama a user_repository.guardar(user)
+  ▼
+repository/user.py
+  │  Lee usuarios.json
+  │  Agrega el nuevo usuario al array
+  │  Escribe usuarios.json actualizado
+  ▼
+usuarios.json  (dato persistido)
+  │
+  └── respuesta sube por las capas → { "mensaje": "Usuario creado", "correo": "..." }
+  ▼
+Navegador recibe 200 OK y muestra mensaje de éxito
+```
+
+---
+
+### Frontend: estructura de componentes
+
+El frontend sigue el principio de **separación entre lógica de comunicación y lógica de presentación**:
+
+| Archivo | Responsabilidad |
+|---------|-----------------|
+| `main.js` | Monta la aplicación Vue en el DOM. No contiene lógica propia. |
+| `App.vue` | Componente raíz mínimo. Solo importa y renderiza `HelloWorld.vue`. Existir como capa separada permite agregar en el futuro un sistema de rutas (Vue Router) sin modificar los componentes de negocio. |
+| `components/HelloWorld.vue` | Contiene todo el estado reactivo (lista de usuarios, formulario, modo edición, mensajes de error/éxito) y los métodos CRUD. Es el único componente con lógica de negocio del frontend. |
+| `api/api.js` | Cliente HTTP aislado. Todas las llamadas `fetch()` al backend viven aquí. Si la URL del backend cambia, o si se quiere reemplazar `fetch` por `axios`, el cambio ocurre en un solo lugar sin tocar el componente. |
+
+**¿Por qué separar `api.js` del componente?**  
+Porque la forma de comunicarse con el servidor es un detalle técnico, no lógica de UI. Un componente no debería saber si los datos vienen de un fetch, de un WebSocket o de un mock. Mantenerlos separados hace que ambos sean más fáciles de probar y reutilizar.
 
 ---
 
