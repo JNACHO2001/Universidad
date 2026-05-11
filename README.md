@@ -193,8 +193,6 @@ La aplicación queda disponible en: `http://localhost:5173`
 | Comando | Descripción |
 |---------|-------------|
 | `npm run dev` | Servidor de desarrollo con Hot Module Replacement |
-| `npm run build` | Compilar para producción (salida en `dist/`) |
-| `npm run preview` | Previsualizar la build de producción |
 
 ---
 
