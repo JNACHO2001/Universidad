@@ -474,5 +474,199 @@ La URL base del backend está definida en `frontend/src/src/api/api.js`. Si el b
 
 ---
 
+## Pruebas automatizadas con Playwright (MCP)
+
+Este proyecto incluye pruebas end-to-end ejecutadas con **Playwright a través del protocolo MCP** (Model Context Protocol) integrado en Claude Code. No se requiere instalar Playwright de forma separada ni escribir código manualmente: Claude actúa como ingeniero QA y ejecuta las pruebas de forma interactiva sobre el navegador real.
+
+---
+
+### Archivos de configuración necesarios
+
+#### `.mcp.json` — Registro del servidor MCP de Playwright
+
+Ubicado en la raíz del proyecto. Registra Playwright como servidor MCP disponible para Claude Code:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+> Requiere Node.js instalado. `npx` descarga y ejecuta `@playwright/mcp` automáticamente sin instalación previa.
+
+---
+
+#### `.claude/settings.local.json` — Permisos de herramientas
+
+Autoriza a Claude Code a usar las herramientas de Playwright sin pedir confirmación en cada acción:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_network_request",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
+}
+```
+
+| Permiso | Descripción |
+|---|---|
+| `browser_snapshot` | Captura el árbol de accesibilidad de la página (mejor que screenshot para interacciones) |
+| `browser_take_screenshot` | Toma capturas de pantalla PNG/JPEG |
+| `browser_network_requests` | Lista todas las peticiones HTTP realizadas |
+| `browser_network_request` | Obtiene headers y body de una petición específica |
+| `browser_fill_form` | Rellena múltiples campos de un formulario |
+| `browser_click` | Hace clic en botones y elementos interactivos |
+| `browser_evaluate` | Ejecuta JavaScript en la página para inspeccionar el DOM |
+
+---
+
+### URL probada
+
+| Servicio | URL |
+|---|---|
+| Frontend (Vue + Vite) | `http://localhost:5173` |
+| Backend API (FastAPI) | `http://127.0.0.1:8000` |
+
+Ambos servicios deben estar corriendo antes de ejecutar las pruebas. Ver sección [Instalación y configuración](#instalación-y-configuración).
+
+---
+
+### Tipos de pruebas ejecutadas
+
+| Tipo | Descripción | Ejemplo en este proyecto |
+|---|---|---|
+| **Consulta (READ)** | Verifica que los datos se cargan correctamente al iniciar | Tabla de usuarios cargada con GET /usuarios → 200 |
+| **Creación válida (CREATE)** | Envía datos correctos y verifica registro exitoso | POST con nombre, apellido, correo y contraseña → 200 |
+| **Creación inválida** | Envía datos incorrectos y verifica rechazo del servidor | POST con campos vacíos → 400 `"Los campos no deben estar vacíos"` |
+| **Duplicado** | Intenta crear un recurso con clave única repetida | POST con correo ya existente → 400 `"El correo ya está registrado"` |
+| **Edición válida (UPDATE)** | Modifica un registro existente con datos correctos | PUT /usuarios/:correo → 200 |
+| **Edición inválida** | Intenta actualizar con campos vacíos | PUT con nombre/apellido vacíos → **200 (bug detectado)** |
+| **Cancelar acción** | Verifica que descartar cambios restaura el estado de la UI | Clic en "Cancelar" → formulario vuelve al modo registro |
+| **Eliminación (DELETE)** | Borra un registro y verifica que desaparece de la tabla | DELETE /usuarios/:correo → 200 |
+| **Validación HTML5** | Comprueba validaciones nativas del navegador | Input `type="email"` bloquea correo sin `@` antes de llegar al backend |
+| **Comportamiento UI** | Verifica interacciones de la interfaz | Toggle de visibilidad de contraseña — **bug detectado** |
+
+---
+
+### Prompt utilizado para ejecutar las pruebas
+
+El siguiente prompt se entregó a Claude Code para realizar el análisis y las pruebas completas de forma autónoma. Puede reutilizarse en cualquier proyecto con interfaz web:
+
+```
+ingresa a esta web y has lo siguiente http://localhost:5173/
+Actúa como un Ingeniero QA Senior especializado en pruebas end-to-end con Playwright.
+
+Objetivo:
+Analizar y probar completamente la interfaz de usuario de mi aplicación web, enfocándote
+en las operaciones funcionales principales del sistema (crear, consultar, editar, eliminar
+y validar formularios). Debes ejecutar todas las pruebas automáticamente y generar un
+reporte técnico en formato Markdown con el detalle de los resultados.
+
+Instrucciones generales:
+1. Identifica todos los formularios, botones y tablas disponibles en la aplicación.
+2. Ejecuta pruebas funcionales sobre cada módulo detectado.
+3. Valida operaciones CRUD:
+   - Crear registros.
+   - Consultar registros.
+   - Editar registros.
+   - Eliminar registros.
+4. Valida formularios con:
+   - Datos correctos.
+   - Datos incorrectos.
+   - Campos vacíos.
+5. Para cada acción realizada:
+   - Registra el código de estado HTTP recibido (200, 201, 204, 400, 404, 500, etc.).
+   - Indica si la validación fue exitosa o fallida.
+   - Documenta el mensaje devuelto por la interfaz o por la API.
+6. Si una prueba falla, continúa ejecutando las demás.
+7. Genera un archivo Markdown con el reporte completo.
+8. Incluye en el reporte el código fuente de cada prueba automatizada ejecutada.
+
+Cobertura mínima de pruebas:
+- Registro de usuarios.
+- Crear registros.
+- Consultar registros.
+- Editar registros.
+- Eliminar registros.
+- Validación de formularios con datos válidos e inválidos.
+- Manejo de errores del servidor.
+
+Formato del archivo Markdown:
+# Reporte de Pruebas Automatizadas
+[...incluir secciones: Información General, Resumen Ejecutivo, Detalle de Pruebas,
+Código de Pruebas, Errores Encontrados, Recomendaciones, Conclusión]
+
+Requisitos adicionales:
+- Usa Playwright con JavaScript o TypeScript.
+- Continúa con todas las pruebas aunque algunas fallen.
+- Organiza el reporte de forma clara y profesional.
+- Guarda el reporte en un archivo llamado REPORTE_PRUEBAS_UI.md.
+- Documenta los endpoints consumidos y los códigos HTTP obtenidos cuando sea posible.
+```
+
+---
+
+### Resultados obtenidos
+
+El reporte completo generado por las pruebas se encuentra en [`REPORTE_PRUEBAS_UI.md`](./REPORTE_PRUEBAS_UI.md).
+
+**Resumen de la última ejecución (2026-05-11):**
+
+| Métrica | Valor |
+|---|---|
+| Total de pruebas | 10 |
+| Pruebas exitosas | 7 |
+| Pruebas fallidas | 2 |
+| Pruebas parciales | 1 |
+| Bugs críticos detectados | 2 |
+| Bugs totales detectados | 6 |
+
+| # | Caso de Prueba | HTTP | Estado |
+|---|---|---|---|
+| 1 | Consultar usuarios (GET) | 200 | ✅ PASÓ |
+| 2 | Crear usuario datos válidos | 200 | ✅ PASÓ |
+| 3 | Crear usuario campos vacíos | 400 | ✅ PASÓ |
+| 4 | Crear usuario correo duplicado | 400 | ✅ PASÓ |
+| 5 | Editar usuario datos válidos | 200 | ✅ PASÓ |
+| 6 | Editar usuario campos vacíos | 200 | ❌ FALLÓ — bug en PUT |
+| 7 | Cancelar edición | — | ✅ PASÓ |
+| 8 | Eliminar usuario | 200 | ✅ PASÓ |
+| 9 | Toggle visibilidad contraseña | — | ❌ FALLÓ — bug en UI |
+| 10 | Correo sin formato `@` | — | ⚠️ PARCIAL — solo frontend valida |
+
+---
+
+### Estructura de archivos de pruebas
+
+```
+Universidad/
+├── .mcp.json                      # Configuración del servidor MCP Playwright
+├── .claude/
+│   └── settings.local.json        # Permisos de herramientas para Claude Code
+├── REPORTE_PRUEBAS_UI.md          # Reporte completo generado automáticamente
+└── .gitignore                     # Incluye .playwright-mcp/ (archivos temporales)
+```
+
+> La carpeta `.playwright-mcp/` es generada automáticamente por el servidor MCP durante la ejecución de pruebas (snapshots, screenshots, logs de consola). Está ignorada por Git mediante `.gitignore`.
+
+---
+
 
 
