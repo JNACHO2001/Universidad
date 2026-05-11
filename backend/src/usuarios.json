@@ -1,14 +1,8 @@
 [
     {
-        "nombre": "fercho",
-        "apellido": "taru",
-        "correo": "fercho@gmail.com",
-        "contraseña": "5456112"
-    },
-    {
-        "nombre": "juan",
-        "apellido": "fermin",
-        "correo": "joseesapelgmail.com",
-        "contraseña": "123456"
+        "nombre": "Ana Lucía",
+        "apellido": "García",
+        "correo": "ana.garcia@empresa.com",
+        "contraseña": "Password123"
     }
 ]

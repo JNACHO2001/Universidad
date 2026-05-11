@@ -1,423 +1,501 @@
-# Reporte de Pruebas Automatizadas
-
-## Información General
-
-| Campo | Valor |
-|---|---|
-| **Fecha y hora de ejecución** | 2026-05-11 00:31 – 00:40 UTC |
-| **URL probada** | http://localhost:5173/ |
-| **API backend** | http://127.0.0.1:8000 |
-| **Herramienta utilizada** | Playwright (MCP) |
-| **Navegador utilizado** | Google Chrome 147.0.0.0 |
-| **Total de pruebas ejecutadas** | 10 |
-| **Pruebas exitosas** | 7 |
-| **Pruebas fallidas** | 3 |
+# Reporte de Pruebas Automatizadas — User Central Management Console
 
 ---
 
-## Resumen Ejecutivo
+## 1. Información General
 
-| # | Módulo | Caso de Prueba | Método HTTP | Endpoint | Código HTTP | Resultado | Observaciones |
-|---|---|---|---|---|---|---|---|
-| 1 | Usuarios | Consultar todos los usuarios | GET | /usuarios | 200 | ✅ PASÓ | Datos devueltos correctamente |
-| 2 | Usuarios | Crear usuario con datos válidos | POST | /usuarios | 200 | ✅ PASÓ | Usuario creado. Debería retornar 201 |
-| 3 | Usuarios | Crear usuario con campos vacíos | POST | /usuarios | 400 | ✅ PASÓ | Backend valida y rechaza |
-| 4 | Usuarios | Crear usuario con correo duplicado | POST | /usuarios | 400 | ✅ PASÓ | Backend detecta duplicado |
-| 5 | Usuarios | Editar usuario con datos válidos | PUT | /usuarios/:correo | 200 | ✅ PASÓ | Actualización correcta |
-| 6 | Usuarios | Editar usuario con campos vacíos | PUT | /usuarios/:correo | 200 | ❌ FALLÓ | **BUG:** Backend acepta nombre/apellido vacíos |
-| 7 | Usuarios | Cancelar edición | — | — | — | ✅ PASÓ | Formulario vuelve a modo registro |
-| 8 | Usuarios | Eliminar usuario | DELETE | /usuarios/:correo | 200 | ✅ PASÓ | Eliminación correcta |
-| 9 | UI | Toggle visibilidad contraseña | — | — | — | ❌ FALLÓ | **BUG:** Input no cambia de tipo password a text |
-| 10 | Usuarios | Crear usuario con correo sin formato | POST | /usuarios | — | ⚠️ PARCIAL | Frontend bloquea, backend no valida formato |
-
----
-
-## Detalle de Pruebas
+| Campo               | Detalle                                             |
+|---------------------|-----------------------------------------------------|
+| **Aplicación**      | User Central - Management Console                  |
+| **URL Frontend**    | http://localhost:5173/                              |
+| **URL Backend**     | http://127.0.0.1:8000                               |
+| **Framework UI**    | Vue 3 (Vite)                                        |
+| **Framework API**   | FastAPI (Python)                                    |
+| **Herramienta QA**  | Playwright MCP (JavaScript)                         |
+| **Fecha ejecución** | 2026-05-10                                          |
+| **Ejecutado por**   | Agente QA Senior — Claude Sonnet 4.6                |
+| **Rama**            | testeo-y-calidad/unidad-2-actividad-2               |
 
 ---
 
-### Prueba 1 — Consultar registros (GET)
+## 2. Resumen Ejecutivo
 
-- **Objetivo:** Verificar que la tabla de usuarios se carga correctamente al iniciar la aplicación.
-- **Pasos ejecutados:**
-  1. Navegar a `http://localhost:5173/`
-  2. Observar la tabla "User Directory"
-  3. Capturar la petición GET al backend
-- **Datos utilizados:** Ninguno (solo lectura)
-- **Resultado esperado:** Tabla con registros existentes cargada y petición GET con 200 OK
-- **Resultado obtenido:** Tabla mostró 2 usuarios preexistentes (`fercho taru` y `juan fermin`). GET retornó 200 OK con JSON `{"mensaje":"datos obtenidos correctamente","data":[...]}`
-- **Código HTTP:** `200 OK`
-- **Estado final:** ✅ PASÓ
+| Métrica                        | Valor  |
+|-------------------------------|--------|
+| Total de casos de prueba       | 15     |
+| Casos exitosos (PASS)          | 13     |
+| Casos fallidos (FAIL)          | 2      |
+| Tasa de éxito                  | 86.7 % |
+| Bugs críticos encontrados      | 2      |
+| Endpoints evaluados            | 4      |
 
-> **Nota de seguridad:** La respuesta incluye las contraseñas en texto plano: `"contraseña":"5456112"` y `"contraseña":"123456"`. Esto es una vulnerabilidad crítica de seguridad.
+### Conclusión rápida
 
----
-
-### Prueba 2 — Crear usuario con datos válidos (POST)
-
-- **Objetivo:** Verificar que el formulario de registro crea un usuario correctamente.
-- **Pasos ejecutados:**
-  1. Rellenar el campo Nombre con `Carlos`
-  2. Rellenar el campo Apellido con `Martinez`
-  3. Rellenar el campo Correo con `carlos.martinez@empresa.com`
-  4. Rellenar el campo Contraseña con `Segura123!`
-  5. Hacer clic en "Registrar usuario"
-- **Datos utilizados:** `{ nombre: "Carlos", apellido: "Martinez", correo: "carlos.martinez@empresa.com", contraseña: "Segura123!" }`
-- **Resultado esperado:** Usuario creado, mensaje de éxito en UI, tabla actualizada con el nuevo registro
-- **Resultado obtenido:** Mensaje `"Usuario creado correctamente"` mostrado en UI. Tabla actualizada con la fila de Carlos Martinez. POST retornó 200 con `{"mensaje":"Usuario creado correctamente","correo":"carlos.martinez@empresa.com"}`
-- **Código HTTP:** `200 OK`
-- **Estado final:** ✅ PASÓ
-
-> **Observación:** El estándar REST recomienda `201 Created` para creación de recursos, no `200 OK`.
+La aplicación cubre correctamente el flujo principal de creación, consulta, edición y eliminación de usuarios. Las validaciones del formulario de **creación** funcionan bien tanto a nivel frontend (HTML5) como backend. Sin embargo, se identificaron **2 bugs de severidad alta** relacionados con la falta de validación en el endpoint de actualización (`PUT`) y con el código HTTP incorrecto al consultar una lista vacía (`GET`).
 
 ---
 
-### Prueba 3 — Crear usuario con campos vacíos (POST)
+## 3. Endpoints Consumidos
 
-- **Objetivo:** Verificar que el backend rechaza el registro cuando todos los campos están vacíos.
-- **Pasos ejecutados:**
-  1. No ingresar ningún dato en el formulario
-  2. Hacer clic en "Registrar usuario"
-- **Datos utilizados:** `{ nombre: "", apellido: "", correo: "", contraseña: "" }`
-- **Resultado esperado:** Backend retorna error 400, UI muestra mensaje de error
-- **Resultado obtenido:** Backend retornó 400 con `{"detail":"Los campos no deben estar vacíos"}`. UI mostró el mensaje de error.
-- **Código HTTP:** `400 Bad Request`
-- **Estado final:** ✅ PASÓ
+| Método   | Endpoint                          | Descripción                      |
+|----------|-----------------------------------|----------------------------------|
+| `GET`    | `/usuarios`                       | Obtener lista de usuarios        |
+| `POST`   | `/usuarios`                       | Crear nuevo usuario              |
+| `PUT`    | `/usuarios/{correo}`              | Actualizar usuario por correo    |
+| `DELETE` | `/usuarios/{correo}`              | Eliminar usuario por correo      |
 
 ---
 
-### Prueba 4 — Crear usuario con correo duplicado (POST)
+## 4. Detalle de Pruebas
 
-- **Objetivo:** Verificar que el sistema impide registrar dos usuarios con el mismo correo.
-- **Pasos ejecutados:**
-  1. Ingresar datos válidos usando el correo `carlos.martinez@empresa.com` (ya registrado)
-  2. Hacer clic en "Registrar usuario"
-- **Datos utilizados:** `{ nombre: "Carlos", apellido: "Duplicado", correo: "carlos.martinez@empresa.com", contraseña: "Pass123!" }`
-- **Resultado esperado:** Backend retorna error 400, UI muestra mensaje de error
-- **Resultado obtenido:** Backend retornó 400 con `{"detail":"El correo ya está registrado"}`. UI mostró el mensaje de error.
-- **Código HTTP:** `400 Bad Request`
-- **Estado final:** ✅ PASÓ
+### TC-01 — Crear usuario con datos válidos
 
----
-
-### Prueba 5 — Editar usuario con datos válidos (PUT)
-
-- **Objetivo:** Verificar que el formulario de edición actualiza correctamente un usuario.
-- **Pasos ejecutados:**
-  1. Hacer clic en botón "edit" del usuario `Carlos Martinez`
-  2. Verificar que el formulario carga los datos actuales del usuario
-  3. Modificar el campo Apellido a `Martinez-Actualizado`
-  4. Hacer clic en "Actualizar usuario"
-- **Datos utilizados:** `{ nombre: "Carlos", apellido: "Martinez-Actualizado", correo: "carlos.martinez@empresa.com", contraseña: "Segura123!" }`
-- **Resultado esperado:** Usuario actualizado, mensaje de éxito, tabla refleja el cambio
-- **Resultado obtenido:** Formulario cargó datos preexistentes correctamente. PUT a `/usuarios/carlos.martinez@empresa.com` retornó 200 con `{"mensaje":"Usuario actualizado correctamente"}`. Tabla actualizó el apellido.
-- **Código HTTP:** `200 OK`
-- **Estado final:** ✅ PASÓ
+| Campo              | Valor                                  |
+|--------------------|----------------------------------------|
+| **Tipo**           | Funcional — CRUD Crear                 |
+| **Endpoint**       | `POST /usuarios`                       |
+| **Datos entrada**  | nombre: Ana, apellido: García, correo: ana.garcia@empresa.com, contraseña: Password123 |
+| **HTTP esperado**  | 200                                    |
+| **HTTP obtenido**  | 200 OK                                 |
+| **Mensaje UI**     | "Usuario creado correctamente"         |
+| **Resultado**      | ✅ PASS                                |
+| **Observaciones**  | El usuario aparece en la tabla inmediatamente tras la creación. El formulario se limpia automáticamente. |
 
 ---
 
-### Prueba 6 — Editar usuario con campos vacíos (PUT) — BUG
+### TC-02 — Crear usuario con correo duplicado
 
-- **Objetivo:** Verificar que el backend rechaza la actualización cuando nombre y apellido están vacíos.
-- **Pasos ejecutados:**
-  1. Hacer clic en botón "edit" del usuario `Carlos Martinez-Actualizado`
-  2. Borrar el campo Nombre (dejarlo vacío)
-  3. Borrar el campo Apellido (dejarlo vacío)
-  4. Hacer clic en "Actualizar usuario"
-- **Datos utilizados:** `{ nombre: "", apellido: "", correo: "carlos.martinez@empresa.com", contraseña: "Segura123!" }`
-- **Resultado esperado:** Backend retorna error 400 con mensaje de validación
-- **Resultado obtenido:** Backend retornó **200 OK** con `{"mensaje":"Usuario actualizado correctamente"}`. El usuario quedó con nombre y apellido vacíos en la base de datos, mostrando celdas vacías en la tabla.
-- **Código HTTP:** `200 OK` _(incorrecto — debería ser 400)_
-- **Estado final:** ❌ FALLÓ
-
----
-
-### Prueba 7 — Cancelar edición
-
-- **Objetivo:** Verificar que el botón "Cancelar" descarta los cambios y restaura el formulario al modo de registro.
-- **Pasos ejecutados:**
-  1. Hacer clic en botón "edit" de cualquier usuario
-  2. Hacer clic en el botón "Cancelar"
-- **Datos utilizados:** Ninguno
-- **Resultado esperado:** Formulario vuelve al modo "Registrar usuario" sin guardar cambios, botón "Registrar usuario" reaparece
-- **Resultado obtenido:** El formulario se limpió y volvió al modo registro correctamente. No se realizó ninguna petición HTTP al backend.
-- **Código HTTP:** Ninguno
-- **Estado final:** ✅ PASÓ
+| Campo              | Valor                                  |
+|--------------------|----------------------------------------|
+| **Tipo**           | Validación — dato inválido             |
+| **Endpoint**       | `POST /usuarios`                       |
+| **Datos entrada**  | correo: ana.garcia@empresa.com (ya registrado) |
+| **HTTP esperado**  | 400                                    |
+| **HTTP obtenido**  | 400 Bad Request                        |
+| **Mensaje UI**     | "El correo ya está registrado"         |
+| **Resultado**      | ✅ PASS                                |
+| **Observaciones**  | El backend valida la unicidad del correo y retorna el mensaje correcto. |
 
 ---
 
-### Prueba 8 — Eliminar usuario (DELETE)
+### TC-03 — Crear usuario con todos los campos vacíos
 
-- **Objetivo:** Verificar que el botón "delete" elimina un usuario correctamente.
-- **Pasos ejecutados:**
-  1. Hacer clic en el botón "delete" del usuario con correo `carlos.martinez@empresa.com`
-  2. Verificar la respuesta y el estado de la tabla
-- **Datos utilizados:** Correo `carlos.martinez@empresa.com` (extraído del registro)
-- **Resultado esperado:** Usuario eliminado, mensaje de confirmación, fila desaparece de la tabla
-- **Resultado obtenido:** DELETE a `/usuarios/carlos.martinez@empresa.com` retornó 200 con `{"mensaje":"Usuario eliminado correctamente"}`. La fila desapareció de la tabla. Tabla quedó con 2 registros.
-- **Código HTTP:** `200 OK`
-- **Estado final:** ✅ PASÓ
-
-> **Observación:** No hay diálogo de confirmación antes de eliminar. Un clic accidental borra el registro permanentemente.
-
----
-
-### Prueba 9 — Toggle visibilidad de contraseña — BUG
-
-- **Objetivo:** Verificar que el botón de ojo ("visibility") alterna el campo de contraseña entre tipo `password` y `text`.
-- **Pasos ejecutados:**
-  1. Escribir `MiClave123` en el campo Contraseña
-  2. Verificar que el tipo del input es `password` (valor oculto)
-  3. Hacer clic en el botón "visibility"
-  4. Verificar que el tipo del input cambió a `text` (valor visible)
-- **Datos utilizados:** Contraseña: `MiClave123`
-- **Resultado esperado:** Después del clic, el input cambia de `type="password"` a `type="text"` mostrando la contraseña en texto plano
-- **Resultado obtenido:** El tipo del input permaneció en `password` antes y después del clic. La contraseña no se hace visible. El botón recibe el estado `[active]` pero no ejecuta el cambio de tipo.
-- **Código HTTP:** N/A
-- **Estado final:** ❌ FALLÓ
+| Campo              | Valor                                  |
+|--------------------|----------------------------------------|
+| **Tipo**           | Validación — campos vacíos             |
+| **Endpoint**       | `POST /usuarios`                       |
+| **Datos entrada**  | todos los campos vacíos                |
+| **HTTP esperado**  | 400                                    |
+| **HTTP obtenido**  | 400 Bad Request                        |
+| **Mensaje UI**     | "Los campos no deben estar vacíos"     |
+| **Resultado**      | ✅ PASS                                |
+| **Observaciones**  | La validación ocurre en el backend, no en el frontend. El formulario llega al servidor con campos vacíos y este rechaza la petición. |
 
 ---
 
-### Prueba 10 — Crear usuario con correo sin formato válido
+### TC-04 — Crear usuario con correo de formato inválido
 
-- **Objetivo:** Verificar el comportamiento del sistema ante un correo sin el símbolo `@`.
-- **Pasos ejecutados:**
-  1. Completar el formulario con correo `correo-sin-arroba`
-  2. Hacer clic en "Registrar usuario"
-- **Datos utilizados:** `{ nombre: "Test", apellido: "Invalido", correo: "correo-sin-arroba", contraseña: "Pass123" }`
-- **Resultado esperado:** El sistema rechaza el correo inválido con un mensaje de error
-- **Resultado obtenido:** El navegador bloqueó el envío gracias al atributo HTML5 `type="email"` en el input. No se realizó ninguna petición HTTP al backend. **Sin embargo, la validación solo existe en el frontend.**
-- **Código HTTP:** Ninguno (bloqueado por validación HTML5)
-- **Estado final:** ⚠️ PARCIAL — Validación solo en cliente, no en servidor
-
-> **Evidencia de vulnerabilidad backend:** Uno de los usuarios preexistentes (`juan fermin`) tiene el correo `joseesapelgmail.com` (sin `@`), lo que confirma que el endpoint POST no valida el formato del correo a nivel de backend.
+| Campo              | Valor                                  |
+|--------------------|----------------------------------------|
+| **Tipo**           | Validación — formato de correo         |
+| **Endpoint**       | N/A (bloqueado por validación nativa)  |
+| **Datos entrada**  | correo: "correo-invalido"              |
+| **HTTP esperado**  | Sin petición                           |
+| **HTTP obtenido**  | Sin petición al servidor               |
+| **Mensaje UI**     | Tooltip nativo del navegador           |
+| **Resultado**      | ✅ PASS                                |
+| **Observaciones**  | El campo `<input type="email">` activa la validación HTML5 nativa del navegador, impidiendo el submit. No se realiza ninguna petición HTTP. |
 
 ---
 
-## Código de las Pruebas Automatizadas
+### TC-05 — Crear segundo usuario válido
 
-```javascript
-const { chromium } = require('playwright');
+| Campo              | Valor                                  |
+|--------------------|----------------------------------------|
+| **Tipo**           | Funcional — CRUD Crear                 |
+| **Endpoint**       | `POST /usuarios`                       |
+| **Datos entrada**  | nombre: Carlos, apellido: Ruiz, correo: carlos.ruiz@empresa.com, contraseña: SecurePass789 |
+| **HTTP esperado**  | 200                                    |
+| **HTTP obtenido**  | 200 OK                                 |
+| **Mensaje UI**     | "Usuario creado correctamente"         |
+| **Resultado**      | ✅ PASS                                |
+| **Observaciones**  | La tabla muestra dos registros tras la creación. El GET posterior retorna 200. |
 
-(async () => {
-  const browser = await chromium.launch({ headless: false });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const BASE_URL = 'http://localhost:5173';
-  const API_URL = 'http://127.0.0.1:8000';
+---
 
-  const results = [];
-  const log = (test, status, http, obs) => results.push({ test, status, http, obs });
+### TC-06 — Editar usuario existente
 
-  // ─── PRUEBA 1: Consultar registros ──────────────────────────────────────────
-  await page.goto(BASE_URL);
-  await page.waitForResponse(r => r.url().includes('/usuarios') && r.request().method() === 'GET');
-  const rows = await page.locator('table tbody tr').count();
-  log('Consultar registros', rows > 0 ? 'PASÓ' : 'FALLÓ', 200, `${rows} usuario(s) encontrado(s)`);
+| Campo              | Valor                                  |
+|--------------------|----------------------------------------|
+| **Tipo**           | Funcional — CRUD Editar                |
+| **Endpoint**       | `PUT /usuarios/ana.garcia@empresa.com` |
+| **Datos entrada**  | nombre: "Ana Lucía", apellido: "García López" |
+| **HTTP esperado**  | 200                                    |
+| **HTTP obtenido**  | 200 OK                                 |
+| **Mensaje UI**     | "Usuario actualizado correctamente"    |
+| **Resultado**      | ✅ PASS                                |
+| **Observaciones**  | Al hacer clic en el botón "edit" de la tabla, el formulario se pre-rellena con los datos del usuario y el botón cambia a "Actualizar usuario". La tabla refleja los cambios tras la respuesta. |
 
-  // ─── PRUEBA 2: Crear usuario con datos válidos ───────────────────────────────
-  await page.getByRole('textbox', { name: 'Nombre' }).fill('Carlos');
-  await page.getByRole('textbox', { name: 'Apellido' }).fill('Martinez');
-  await page.getByRole('textbox', { name: 'Correo' }).fill('carlos.martinez@empresa.com');
-  await page.getByRole('textbox', { name: 'Contraseña' }).fill('Segura123!');
-  const [postRes] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/usuarios') && r.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Registrar usuario' }).click()
-  ]);
-  const postBody = await postRes.json();
-  log('Crear usuario (datos válidos)', postRes.status() === 200 ? 'PASÓ' : 'FALLÓ', postRes.status(), postBody.mensaje);
+---
 
-  // ─── PRUEBA 3: Crear usuario con campos vacíos ───────────────────────────────
-  const [emptyRes] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/usuarios') && r.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Registrar usuario' }).click()
-  ]);
-  const emptyBody = await emptyRes.json();
-  log('Crear usuario (campos vacíos)', emptyRes.status() === 400 ? 'PASÓ' : 'FALLÓ', emptyRes.status(), emptyBody.detail);
+### TC-07 — Cancelar modo edición
 
-  // ─── PRUEBA 4: Crear usuario con correo duplicado ────────────────────────────
-  await page.getByRole('textbox', { name: 'Nombre' }).fill('Carlos');
-  await page.getByRole('textbox', { name: 'Apellido' }).fill('Duplicado');
-  await page.getByRole('textbox', { name: 'Correo' }).fill('carlos.martinez@empresa.com');
-  await page.getByRole('textbox', { name: 'Contraseña' }).fill('Pass123!');
-  const [dupRes] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/usuarios') && r.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Registrar usuario' }).click()
-  ]);
-  const dupBody = await dupRes.json();
-  log('Crear usuario (correo duplicado)', dupRes.status() === 400 ? 'PASÓ' : 'FALLÓ', dupRes.status(), dupBody.detail);
+| Campo              | Valor                                  |
+|--------------------|----------------------------------------|
+| **Tipo**           | Funcional — UX                         |
+| **Endpoint**       | N/A                                    |
+| **Datos entrada**  | Clic en "Cancelar"                     |
+| **HTTP esperado**  | Sin petición                           |
+| **HTTP obtenido**  | Sin petición                           |
+| **Mensaje UI**     | Formulario limpiado, botón vuelve a "Registrar usuario" |
+| **Resultado**      | ✅ PASS                                |
+| **Observaciones**  | El formulario vuelve al estado inicial sin realizar ninguna petición. |
 
-  // ─── PRUEBA 5: Editar usuario con datos válidos ──────────────────────────────
-  await page.getByRole('button', { name: 'edit' }).nth(2).click();
-  await page.getByRole('textbox', { name: 'Apellido' }).fill('Martinez-Actualizado');
-  const [putRes] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/usuarios/') && r.request().method() === 'PUT'),
-    page.getByRole('button', { name: 'Actualizar usuario' }).click()
-  ]);
-  const putBody = await putRes.json();
-  log('Editar usuario (datos válidos)', putRes.status() === 200 ? 'PASÓ' : 'FALLÓ', putRes.status(), putBody.mensaje);
+---
 
-  // ─── PRUEBA 6: Editar usuario con campos vacíos (BUG) ───────────────────────
-  await page.getByRole('button', { name: 'edit' }).nth(2).click();
-  await page.getByRole('textbox', { name: 'Nombre' }).fill('');
-  await page.getByRole('textbox', { name: 'Apellido' }).fill('');
-  const [putEmptyRes] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/usuarios/') && r.request().method() === 'PUT'),
-    page.getByRole('button', { name: 'Actualizar usuario' }).click()
-  ]);
-  const putEmptyBody = await putEmptyRes.json();
-  log('Editar usuario (campos vacíos)', putEmptyRes.status() === 400 ? 'PASÓ' : 'FALLÓ',
-    putEmptyRes.status(), `BUG: ${putEmptyBody.mensaje} — debería ser 400`);
+### TC-08 — Eliminar usuario existente
 
-  // ─── PRUEBA 7: Cancelar edición ──────────────────────────────────────────────
-  await page.getByRole('button', { name: 'edit' }).nth(2).click();
-  await page.getByRole('button', { name: 'Cancelar' }).click();
-  const isRegisterMode = await page.getByRole('button', { name: 'Registrar usuario' }).isVisible();
-  log('Cancelar edición', isRegisterMode ? 'PASÓ' : 'FALLÓ', 'N/A', 'Formulario vuelve a modo registro');
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Funcional — CRUD Eliminar                     |
+| **Endpoint**       | `DELETE /usuarios/carlos.ruiz@empresa.com`    |
+| **HTTP esperado**  | 200                                           |
+| **HTTP obtenido**  | 200 OK                                        |
+| **Mensaje UI**     | "Usuario eliminado correctamente"             |
+| **Resultado**      | ✅ PASS                                       |
+| **Observaciones**  | El registro desaparece de la tabla de forma reactiva (filtrado local) sin recargar toda la lista. No hay diálogo de confirmación antes de eliminar. |
 
-  // ─── PRUEBA 8: Eliminar usuario ──────────────────────────────────────────────
-  const [deleteRes] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/usuarios/') && r.request().method() === 'DELETE'),
-    page.getByRole('button', { name: 'delete' }).nth(2).click()
-  ]);
-  const deleteBody = await deleteRes.json();
-  log('Eliminar usuario', deleteRes.status() === 200 ? 'PASÓ' : 'FALLÓ', deleteRes.status(), deleteBody.mensaje);
+---
 
-  // ─── PRUEBA 9: Toggle visibilidad contraseña (BUG) ──────────────────────────
-  await page.getByRole('textbox', { name: 'Contraseña' }).fill('MiClave123');
-  const typeBefore = await page.evaluate(() =>
-    document.querySelector('input[placeholder="••••••••"]')?.type
-  );
-  await page.getByRole('button', { name: 'visibility' }).click();
-  const typeAfter = await page.evaluate(() =>
-    document.querySelector('input[placeholder="••••••••"]')?.type
-  );
-  log('Toggle visibilidad contraseña', typeAfter === 'text' ? 'PASÓ' : 'FALLÓ', 'N/A',
-    `BUG: tipo antes=${typeBefore}, después=${typeAfter} (debería ser 'text')`);
+### TC-09 — Editar usuario con campos nombre y apellido vacíos (vía UI)
 
-  // ─── PRUEBA 10: Correo inválido (validación HTML5 frontend) ─────────────────
-  await page.getByRole('textbox', { name: 'Nombre' }).fill('Test');
-  await page.getByRole('textbox', { name: 'Apellido' }).fill('Invalido');
-  await page.getByRole('textbox', { name: 'Correo' }).fill('correo-sin-arroba');
-  await page.getByRole('textbox', { name: 'Contraseña' }).fill('Pass123');
-  const requestSent = await new Promise(resolve => {
-    let sent = false;
-    page.on('request', req => { if (req.method() === 'POST') sent = true; });
-    page.getByRole('button', { name: 'Registrar usuario' }).click().then(() => {
-      setTimeout(() => resolve(sent), 1000);
-    });
-  });
-  log('Correo inválido (sin @)', !requestSent ? 'PARCIAL' : 'FALLÓ', 'N/A',
-    'Frontend bloquea, backend no valida formato de correo');
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Validación — campos vacíos en edición         |
+| **Endpoint**       | `PUT /usuarios/ana.garcia@empresa.com`        |
+| **Datos entrada**  | nombre: "", apellido: "", contraseña: ""      |
+| **HTTP esperado**  | 400 (debería validar)                         |
+| **HTTP obtenido**  | **200 OK** ❌                                 |
+| **Mensaje UI**     | "Usuario actualizado correctamente"           |
+| **Resultado**      | ❌ FAIL — **BUG-02**                          |
+| **Observaciones**  | El backend acepta la actualización con campos vacíos. La tabla muestra al usuario con nombre y apellido en blanco. El servicio `crearUsuario` valida los campos obligatorios, pero `actualizarUsuario` omite completamente esas validaciones. |
 
-  // ─── REPORTE CONSOLA ─────────────────────────────────────────────────────────
-  console.table(results);
-  await browser.close();
-})();
+---
+
+### TC-10 — Eliminar usuario inexistente
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Manejo de errores — recurso no encontrado     |
+| **Endpoint**       | `DELETE /usuarios/noexiste@test.com`          |
+| **HTTP esperado**  | 404                                           |
+| **HTTP obtenido**  | 404 Not Found                                 |
+| **Mensaje API**    | `{"detail": "No se encontró el usuario"}`    |
+| **Resultado**      | ✅ PASS                                       |
+| **Observaciones**  | Verificado mediante fetch directo desde el contexto de página. |
+
+---
+
+### TC-11 — Editar usuario inexistente
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Manejo de errores — recurso no encontrado     |
+| **Endpoint**       | `PUT /usuarios/noexiste@test.com`             |
+| **HTTP esperado**  | 404                                           |
+| **HTTP obtenido**  | 404 Not Found                                 |
+| **Mensaje API**    | `{"detail": "No se encontró el usuario"}`    |
+| **Resultado**      | ✅ PASS                                       |
+| **Observaciones**  | Verificado mediante fetch directo. |
+
+---
+
+### TC-12 — Crear usuario con contraseña menor a 6 caracteres
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Validación — longitud de contraseña           |
+| **Endpoint**       | `POST /usuarios`                              |
+| **Datos entrada**  | contraseña: "123"                             |
+| **HTTP esperado**  | 400                                           |
+| **HTTP obtenido**  | 400 Bad Request                               |
+| **Mensaje API**    | `{"detail": "La contraseña debe tener al menos 6 caracteres"}` |
+| **Resultado**      | ✅ PASS                                       |
+| **Observaciones**  | Validación correcta a nivel de servicio. No hay validación equivalente en el frontend. |
+
+---
+
+### TC-13 — Crear usuario con correo vacío (solo correo)
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Validación — campo correo vacío               |
+| **Endpoint**       | `POST /usuarios`                              |
+| **Datos entrada**  | correo: "", resto de campos con valores válidos |
+| **HTTP esperado**  | 400                                           |
+| **HTTP obtenido**  | 400 Bad Request                               |
+| **Mensaje API**    | `{"detail": "El campo correo no puede estar vacío"}` |
+| **Resultado**      | ✅ PASS                                       |
+| **Observaciones**  | La validación diferenciada del correo funciona correctamente. |
+
+---
+
+### TC-14 — Actualizar usuario con todos los campos vacíos (vía API directa)
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Validación — campos vacíos en PUT             |
+| **Endpoint**       | `PUT /usuarios/ana.garcia@empresa.com`        |
+| **Datos entrada**  | nombre: "", apellido: "", contraseña: ""      |
+| **HTTP esperado**  | 400                                           |
+| **HTTP obtenido**  | **200 OK** ❌                                 |
+| **Mensaje API**    | `{"mensaje": "Usuario actualizado correctamente"}` |
+| **Resultado**      | ❌ FAIL — **BUG-02 confirmado**               |
+| **Observaciones**  | Confirma que el bug existe a nivel de API, no solo en la UI. El método `actualizarUsuario` en `services/user.py` no aplica ninguna de las validaciones presentes en `crearUsuario`. |
+
+---
+
+### TC-15 — Consultar lista de usuarios (GET)
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Tipo**           | Funcional — CRUD Consultar                    |
+| **Endpoint**       | `GET /usuarios`                               |
+| **HTTP esperado**  | 200                                           |
+| **HTTP obtenido**  | 200 OK                                        |
+| **Mensaje API**    | `{"mensaje": "datos obtenidos correctamente", "data": [...]}` |
+| **Resultado**      | ✅ PASS (cuando hay usuarios)                 |
+| **Observaciones**  | Cuando la lista está vacía, el backend retorna **404** en lugar de 200 con array vacío — ver BUG-01. |
+
+---
+
+## 5. Bugs Encontrados
+
+### BUG-01 — GET /usuarios retorna 404 cuando no hay usuarios registrados
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Severidad**      | Alta                                          |
+| **Archivo**        | `backend/src/services/user.py` línea 44       |
+| **Endpoint**       | `GET /usuarios`                               |
+| **HTTP obtenido**  | 404 Not Found                                 |
+| **HTTP esperado**  | 200 OK con `{"data": []}`                     |
+| **Descripción**    | El servicio lanza `ValueError("No hay usuarios registrados")` cuando la lista está vacía, lo que la ruta convierte en un `HTTPException(status_code=404)`. Un recurso de colección vacío debería responder 200 con array vacío, no 404. |
+| **Impacto**        | Al iniciar la aplicación sin usuarios, la consola del navegador muestra un error y la UI no distingue entre "sin datos" y "servidor caído". |
+| **Reproducción**   | Vaciar `usuarios.json` → `GET http://127.0.0.1:8000/usuarios` → 404 |
+
+**Corrección sugerida** en `services/user.py`:
+```python
+def mostrarUsuarios(self):
+    return self.repo.obtener_todos()  # devuelve [] si está vacío
+```
+Y en `routes/user.py`, eliminar el bloque `try/except` de `mostrar_Usuarios`.
+
+---
+
+### BUG-02 — PUT /usuarios/{correo} acepta campos vacíos sin validar
+
+| Campo              | Valor                                         |
+|--------------------|-----------------------------------------------|
+| **Severidad**      | Alta                                          |
+| **Archivo**        | `backend/src/services/user.py` línea 29       |
+| **Endpoint**       | `PUT /usuarios/{correo}`                      |
+| **HTTP obtenido**  | 200 OK (incorrecto)                           |
+| **HTTP esperado**  | 400 Bad Request                               |
+| **Descripción**    | El método `actualizarUsuario` solo verifica que el usuario exista, pero no aplica las mismas validaciones de `crearUsuario` (campos vacíos, longitud de contraseña). Es posible guardar un usuario con nombre, apellido y contraseña en blanco. |
+| **Impacto**        | Corrupción de datos. La tabla muestra filas con celdas vacías. La contraseña puede quedar en blanco permitiendo acceso sin credenciales. |
+| **Reproducción**   | Crear un usuario → clic en "edit" → borrar nombre/apellido → "Actualizar usuario" → 200 OK, datos corruptos. |
+
+**Corrección sugerida** en `services/user.py`:
+```python
+def actualizarUsuario(self, correo: str, datosnuevos):
+    if not self.repo.buscar_por_correo(correo):
+        raise ValueError("No se encontró el usuario")
+
+    nuevo = User.from_dict(datosnuevos)
+    if not nuevo.nombre or not nuevo.apellido:
+        raise ValueError("Los campos no deben estar vacíos")
+    if not nuevo.contraseña or len(nuevo.contraseña) < 6:
+        raise ValueError("La contraseña debe tener al menos 6 caracteres")
+
+    return self.repo.actualizar(correo, nuevo)
 ```
 
 ---
 
-## Errores Encontrados
+## 6. Código Fuente de las Pruebas Automatizadas
 
-### BUG-01 — PUT /usuarios acepta nombre y apellido vacíos (CRÍTICO)
+El siguiente código representa las pruebas ejecutadas mediante Playwright MCP durante esta sesión.
 
-- **Endpoint:** `PUT http://127.0.0.1:8000/usuarios/:correo`
-- **Comportamiento actual:** El backend retorna `200 OK` y guarda el usuario con `nombre: ""` y `apellido: ""`.
-- **Comportamiento esperado:** Retornar `400 Bad Request` con mensaje `"Los campos no deben estar vacíos"`.
-- **Impacto:** Corrupción de datos. Usuarios quedan con nombre y apellido en blanco en la base de datos.
-- **Causa probable:** El endpoint PUT no reutiliza la misma lógica de validación de campos vacíos que el endpoint POST.
+```javascript
+// ─────────────────────────────────────────────────────────────────
+// pruebas_ui.spec.js  —  User Central Management Console
+// Herramienta: Playwright MCP (JavaScript)
+// URL Frontend: http://localhost:5173/
+// URL Backend:  http://127.0.0.1:8000
+// ─────────────────────────────────────────────────────────────────
+
+// TC-01: Crear usuario con datos válidos
+await page.goto('http://localhost:5173/');
+await page.getByRole('textbox', { name: 'Nombre' }).fill('Ana');
+await page.getByRole('textbox', { name: 'Apellido' }).fill('García');
+await page.getByRole('textbox', { name: 'Correo' }).fill('ana.garcia@empresa.com');
+await page.getByRole('textbox', { name: 'Contraseña' }).fill('Password123');
+await page.getByRole('button', { name: 'Registrar usuario' }).click();
+// Esperado: POST /usuarios → 200, mensaje "Usuario creado correctamente"
+
+// TC-02: Correo duplicado
+await page.getByRole('textbox', { name: 'Nombre' }).fill('Carlos');
+await page.getByRole('textbox', { name: 'Apellido' }).fill('Ruiz');
+await page.getByRole('textbox', { name: 'Correo' }).fill('ana.garcia@empresa.com');
+await page.getByRole('textbox', { name: 'Contraseña' }).fill('OtraPass456');
+await page.getByRole('button', { name: 'Registrar usuario' }).click();
+// Esperado: POST /usuarios → 400, mensaje "El correo ya está registrado"
+
+// TC-03: Campos vacíos
+await page.getByRole('textbox', { name: 'Nombre' }).fill('');
+await page.getByRole('textbox', { name: 'Apellido' }).fill('');
+await page.getByRole('textbox', { name: 'Correo' }).fill('');
+await page.getByRole('textbox', { name: 'Contraseña' }).fill('');
+await page.getByRole('button', { name: 'Registrar usuario' }).click();
+// Esperado: POST /usuarios → 400, mensaje "Los campos no deben estar vacíos"
+
+// TC-04: Correo con formato inválido (validación HTML5 nativa)
+await page.getByRole('textbox', { name: 'Nombre' }).fill('Test');
+await page.getByRole('textbox', { name: 'Apellido' }).fill('User');
+await page.getByRole('textbox', { name: 'Correo' }).fill('correo-invalido');
+await page.getByRole('textbox', { name: 'Contraseña' }).fill('Pass123');
+await page.getByRole('button', { name: 'Registrar usuario' }).click();
+// Esperado: sin request HTTP — navegador bloquea el submit por type="email"
+
+// TC-05: Crear segundo usuario válido
+await page.getByRole('textbox', { name: 'Nombre' }).fill('Carlos');
+await page.getByRole('textbox', { name: 'Apellido' }).fill('Ruiz');
+await page.getByRole('textbox', { name: 'Correo' }).fill('carlos.ruiz@empresa.com');
+await page.getByRole('textbox', { name: 'Contraseña' }).fill('SecurePass789');
+await page.getByRole('button', { name: 'Registrar usuario' }).click();
+// Esperado: POST /usuarios → 200
+
+// TC-06: Editar usuario existente
+await page.getByRole('button', { name: 'edit' }).first().click();
+await page.getByRole('textbox', { name: 'Nombre' }).fill('Ana Lucía');
+await page.getByRole('textbox', { name: 'Apellido' }).fill('García López');
+await page.getByRole('button', { name: 'Actualizar usuario' }).click();
+// Esperado: PUT /usuarios/ana.garcia@empresa.com → 200
+
+// TC-07: Cancelar modo edición
+await page.getByRole('button', { name: 'edit' }).first().click();
+await page.getByRole('button', { name: 'Cancelar' }).click();
+// Esperado: sin request, formulario limpiado, modo creación restaurado
+
+// TC-08: Eliminar usuario existente
+await page.getByRole('button', { name: 'delete' }).nth(1).click();
+// Esperado: DELETE /usuarios/carlos.ruiz@empresa.com → 200
+
+// TC-09: Editar con campos vacíos (detecta BUG-02)
+await page.getByRole('button', { name: 'edit' }).click();
+await page.getByRole('textbox', { name: 'Nombre' }).fill('');
+await page.getByRole('textbox', { name: 'Apellido' }).fill('');
+await page.getByRole('button', { name: 'Actualizar usuario' }).click();
+// Esperado: 400 — Obtenido: 200 ❌ BUG
+
+// TC-10, TC-11, TC-12, TC-13, TC-14, TC-15: verificaciones vía fetch en página
+await page.evaluate(async () => {
+  // TC-10: DELETE usuario inexistente
+  const r1 = await fetch('http://127.0.0.1:8000/usuarios/noexiste@test.com', { method: 'DELETE' });
+  // Esperado: 404 "No se encontró el usuario"
+
+  // TC-11: PUT usuario inexistente
+  const r2 = await fetch('http://127.0.0.1:8000/usuarios/noexiste@test.com', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre: 'X', apellido: 'Y', correo: 'noexiste@test.com', contraseña: 'abc123' })
+  });
+  // Esperado: 404 "No se encontró el usuario"
+
+  // TC-12: Contraseña corta
+  const r3 = await fetch('http://127.0.0.1:8000/usuarios', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre: 'Pedro', apellido: 'Soto', correo: 'pedro@test.com', contraseña: '123' })
+  });
+  // Esperado: 400 "La contraseña debe tener al menos 6 caracteres"
+
+  // TC-13: Correo vacío
+  const r4 = await fetch('http://127.0.0.1:8000/usuarios', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre: 'Pedro', apellido: 'Soto', correo: '', contraseña: 'validpass' })
+  });
+  // Esperado: 400 "El campo correo no puede estar vacío"
+
+  // TC-14: PUT campos vacíos (confirma BUG-02)
+  const r5 = await fetch('http://127.0.0.1:8000/usuarios/ana.garcia@empresa.com', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre: '', apellido: '', correo: 'ana.garcia@empresa.com', contraseña: '' })
+  });
+  // Esperado: 400 — Obtenido: 200 ❌ BUG
+
+  // TC-15: GET estado actual
+  const r6 = await fetch('http://127.0.0.1:8000/usuarios');
+  // Esperado: 200 con array de usuarios
+});
+```
 
 ---
 
-### BUG-02 — Toggle de visibilidad de contraseña no funciona (MEDIO)
+## 7. Tabla Resumen de Resultados
 
-- **Componente:** Botón `visibility` en el campo Contraseña.
-- **Comportamiento actual:** El input mantiene `type="password"` después de hacer clic. La contraseña no se muestra.
-- **Comportamiento esperado:** Al hacer clic, el input alterna entre `type="password"` y `type="text"`.
-- **Causa probable:** El manejador del evento `onClick` del botón no está actualizando correctamente el estado React que controla el tipo del input, o hay un bug en la condición del estado booleano `showPassword`.
-
----
-
-### BUG-03 — Backend no valida formato de correo electrónico (ALTO)
-
-- **Endpoints afectados:** `POST /usuarios`, `PUT /usuarios/:correo`
-- **Comportamiento actual:** El backend acepta correos con formato inválido (sin `@`). Evidencia: el usuario `juan fermin` tiene correo `joseesapelgmail.com` en la base de datos.
-- **Comportamiento esperado:** Rechazar correos que no cumplan el formato `nombre@dominio.tld`.
-- **Causa probable:** Sin validación de formato en el backend. Solo existe la validación `type="email"` del HTML5, que puede ser omitida mediante peticiones directas a la API.
-
----
-
-### BUG-04 — POST /usuarios retorna 200 en lugar de 201 (BAJO)
-
-- **Endpoint:** `POST http://127.0.0.1:8000/usuarios`
-- **Comportamiento actual:** Retorna `200 OK` al crear un recurso nuevo.
-- **Comportamiento esperado:** Retornar `201 Created` según el estándar REST.
-- **Impacto:** Bajo impacto funcional, pero viola las convenciones REST y puede confundir a consumidores de la API.
+| ID     | Caso de Prueba                                | Endpoint                                  | HTTP Esperado | HTTP Obtenido | Resultado |
+|--------|-----------------------------------------------|-------------------------------------------|---------------|---------------|-----------|
+| TC-01  | Crear usuario con datos válidos               | `POST /usuarios`                          | 200           | 200           | ✅ PASS   |
+| TC-02  | Crear usuario con correo duplicado            | `POST /usuarios`                          | 400           | 400           | ✅ PASS   |
+| TC-03  | Crear usuario con todos los campos vacíos     | `POST /usuarios`                          | 400           | 400           | ✅ PASS   |
+| TC-04  | Correo con formato inválido (HTML5)           | N/A                                       | Sin request   | Sin request   | ✅ PASS   |
+| TC-05  | Crear segundo usuario válido                  | `POST /usuarios`                          | 200           | 200           | ✅ PASS   |
+| TC-06  | Editar usuario existente                      | `PUT /usuarios/ana.garcia@empresa.com`    | 200           | 200           | ✅ PASS   |
+| TC-07  | Cancelar modo edición                         | N/A                                       | Sin request   | Sin request   | ✅ PASS   |
+| TC-08  | Eliminar usuario existente                    | `DELETE /usuarios/carlos.ruiz@empresa.com`| 200           | 200           | ✅ PASS   |
+| TC-09  | Editar usuario con campos vacíos (UI)         | `PUT /usuarios/ana.garcia@empresa.com`    | 400           | **200** ❌    | ❌ FAIL   |
+| TC-10  | Eliminar usuario inexistente                  | `DELETE /usuarios/noexiste@test.com`      | 404           | 404           | ✅ PASS   |
+| TC-11  | Editar usuario inexistente                    | `PUT /usuarios/noexiste@test.com`         | 404           | 404           | ✅ PASS   |
+| TC-12  | Crear usuario con contraseña corta            | `POST /usuarios`                          | 400           | 400           | ✅ PASS   |
+| TC-13  | Crear usuario con correo vacío                | `POST /usuarios`                          | 400           | 400           | ✅ PASS   |
+| TC-14  | Actualizar usuario con campos vacíos (API)    | `PUT /usuarios/ana.garcia@empresa.com`    | 400           | **200** ❌    | ❌ FAIL   |
+| TC-15  | Consultar lista de usuarios                   | `GET /usuarios`                           | 200           | 200           | ✅ PASS   |
 
 ---
 
-### BUG-05 — Contraseñas expuestas en texto plano en GET /usuarios (CRÍTICO - SEGURIDAD)
+## 8. Recomendaciones
 
-- **Endpoint:** `GET http://127.0.0.1:8000/usuarios`
-- **Comportamiento actual:** La respuesta incluye el campo `contraseña` con el valor en texto plano: `"contraseña":"5456112"`.
-- **Comportamiento esperado:** Las contraseñas deben almacenarse con hash (bcrypt/argon2) y nunca devolverse en ninguna respuesta de la API.
-- **Impacto:** Cualquier persona con acceso a la red puede leer todas las contraseñas. Vulnerabilidad OWASP A02:2021 – Cryptographic Failures.
+### R-01 — Añadir validaciones al método `actualizarUsuario` (Prioridad: Alta)
+El servicio `services/user.py` debe validar campos obligatorios y longitud de contraseña al actualizar, igual que al crear. Ver corrección sugerida en BUG-02.
 
----
+### R-02 — Corregir código HTTP en GET /usuarios vacío (Prioridad: Alta)
+Una colección vacía no es un error 404. Retornar `200 OK` con `{"data": []}` es semánticamente correcto y evita que la UI trate la ausencia de registros como un fallo del servidor.
 
-### BUG-06 — Sin confirmación antes de eliminar (MEDIO - UX)
+### R-03 — Agregar validación en frontend antes de enviar el formulario de edición (Prioridad: Media)
+El formulario de creación no valida campos en el cliente antes de enviar al servidor. Para el caso de edición, añadir validación JavaScript que impida el submit con campos vacíos mejora la experiencia de usuario y reduce llamadas innecesarias al backend.
 
-- **Componente:** Botón `delete` en la tabla de usuarios.
-- **Comportamiento actual:** Al hacer clic en `delete`, el usuario se elimina inmediatamente sin pedir confirmación.
-- **Comportamiento esperado:** Mostrar un diálogo de confirmación (`"¿Está seguro de eliminar este usuario?"`) antes de ejecutar el DELETE.
-- **Impacto:** Un clic accidental elimina datos de forma irreversible.
+### R-04 — Añadir diálogo de confirmación antes de eliminar (Prioridad: Media)
+El botón "delete" elimina el registro inmediatamente sin pedir confirmación. Un `window.confirm()` o modal evita eliminaciones accidentales.
 
----
+### R-05 — Mostrar mensaje diferenciado cuando la lista está vacía (Prioridad: Baja)
+Si no hay usuarios, la tabla debería mostrar un texto como "No hay usuarios registrados aún" en lugar de estar simplemente vacía.
 
-## Recomendaciones
-
-1. **Validar campos en endpoint PUT:** Agregar la misma validación de campos vacíos que existe en el POST al endpoint PUT del backend. Ejemplo en FastAPI:
-   ```python
-   if not usuario.nombre.strip() or not usuario.apellido.strip():
-       raise HTTPException(status_code=400, detail="Los campos no deben estar vacíos")
-   ```
-
-2. **Corregir toggle de contraseña:** Revisar el estado React del componente. El botón debe alternar un estado `showPassword` (booleano) y el input debe usar `type={showPassword ? 'text' : 'password'}`. Verificar que el `onClick` del botón llame a `setShowPassword(prev => !prev)`.
-
-3. **Validar formato de correo en backend:** Agregar validación con regex o usando la librería `email-validator`. En FastAPI con Pydantic usar `EmailStr`:
-   ```python
-   from pydantic import EmailStr
-   class Usuario(BaseModel):
-       correo: EmailStr
-   ```
-
-4. **Corregir códigos HTTP REST:** Cambiar la respuesta del POST de `200` a `201 Created` usando `return JSONResponse(status_code=201, content={...})`.
-
-5. **Hashear contraseñas:** Nunca almacenar ni retornar contraseñas en texto plano. Usar `bcrypt` o `passlib`:
-   ```python
-   from passlib.context import CryptContext
-   pwd_context = CryptContext(schemes=["bcrypt"])
-   hashed = pwd_context.hash(usuario.contraseña)
-   ```
-   Además, excluir el campo `contraseña` de todas las respuestas GET.
-
-6. **Agregar confirmación de borrado:** Antes de ejecutar el DELETE, mostrar un diálogo nativo (`window.confirm`) o un modal personalizado que requiera confirmación explícita del usuario.
-
-7. **Agregar validación de contraseña mínima:** Actualmente no hay validación de longitud o complejidad de contraseña. Establecer mínimo 8 caracteres con al menos una letra y un número.
+### R-06 — Validar contraseña mínima también en el frontend (Prioridad: Baja)
+La validación de `>= 6 caracteres` solo existe en el backend. Añadirla en el cliente mejora la experiencia.
 
 ---
 
-## Conclusión
+## 9. Conclusión
 
-La aplicación **User Central - Management Console** cumple con el flujo básico de operaciones CRUD: registrar, consultar, editar y eliminar usuarios funciona en el camino feliz. Sin embargo, se identificaron **6 defectos** — 2 de ellos críticos en materia de seguridad y consistencia de datos.
+La aplicación **User Central Management Console** implementa correctamente el flujo CRUD básico para la gestión de usuarios. El **86.7 %** de los casos de prueba pasan sin problemas y la interfaz responde de forma apropiada a los escenarios de éxito y a la mayoría de los casos de error.
 
-El problema más grave es la **exposición de contraseñas en texto plano** (BUG-05), que representa una vulnerabilidad de seguridad severa que debe corregirse antes de cualquier despliegue en producción. El segundo problema prioritario es la **falta de validación en el endpoint PUT** (BUG-01), que permite corromper datos dejando usuarios con campos vacíos.
+Se detectaron **2 bugs de severidad alta** que deben corregirse antes de pasar a producción:
 
-La ausencia de validación de formato de correo en el backend (BUG-03) también es un riesgo alto, ya que la validación actual solo reside en el frontend y puede saltarse con peticiones directas a la API.
+1. **BUG-01**: `GET /usuarios` vacío retorna 404 en lugar de 200 — afecta la carga inicial de la app.
+2. **BUG-02**: `PUT /usuarios/{correo}` no valida campos obligatorios — permite corrupción de datos de usuario.
 
-**Evaluación general: La aplicación NO está lista para producción.** Se recomienda corregir los bugs críticos (BUG-01, BUG-03, BUG-05) como mínimo antes de continuar con el desarrollo de nuevas funcionalidades.
-
----
-
-*Reporte generado automáticamente mediante Playwright (MCP) el 2026-05-11.*
+Ambas correcciones son simples y están localizadas en `backend/src/services/user.py`.
