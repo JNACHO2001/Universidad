@@ -1,8 +1,4 @@
-# User Central — Management Console
 
-> Aplicación web full-stack para la gestión CRUD de usuarios, desarrollada con **FastAPI** en el backend y **Vue 3** en el frontend.
-
----
 
 ## Tabla de contenido
 
@@ -18,8 +14,7 @@
 - [API Reference](#api-reference)
 - [Modelo de datos](#modelo-de-datos)
 - [Variables de entorno y configuración](#variables-de-entorno-y-configuración)
-- [Consideraciones de seguridad](#consideraciones-de-seguridad)
-- [Ramas del repositorio](#ramas-del-repositorio)
+
 
 ---
 
