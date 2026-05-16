@@ -1,0 +1,29 @@
+# Compilados Java
+*.class
+target/
+build/
+out/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Logs
+*.log
+logs/
+
+# Variables de entorno
+.env
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Maven / Gradle
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+.gradle/
