@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Definición Maven del proyecto SIGR (placeholder de la línea base v1.0.0) -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.sigr</groupId>
+    <artifactId>sigr</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>Sistema Integral de Gestión de Restaurante</name>
+</project>
