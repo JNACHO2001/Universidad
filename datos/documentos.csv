@@ -1,13 +1,41 @@
 texto,etiqueta
-"El presente contrato tendrá vigencia de doce meses y establece las obligaciones de las partes",contrato
-"Las partes acuerdan confidencialidad y cumplimiento de las cláusulas",contrato
-"El valor total a pagar es de 500000 pesos e incluye IVA",factura
-"La factura electrónica debe pagarse antes de la fecha de vencimiento",factura
-"Para instalar el sistema siga los siguientes pasos",manual
-"Consulte este manual para configurar la aplicación",manual
-"El sistema debe permitir registrar usuarios y asignar roles",requerimientos
-"La aplicación debe validar el correo electrónico",requerimientos
-"Adjunto el informe mensual de ventas y resultados",informe
-"El informe presenta los indicadores del trimestre",informe
-"Estimado cliente, adjunto la información solicitada",correo
-"Por favor confirmar la recepción de este correo",correo
+"DOLMEN realizará el mantenimiento preventivo de luminarias en el sector norte del municipio durante el mes de junio",relevante
+"Se aprueba contrato con DOLMEN para la instalación de 200 postes de alumbrado público en la vía principal",relevante
+"El informe técnico de DOLMEN indica que 45 luminarias presentan falla en el transformador",relevante
+"DOLMEN presenta propuesta de modernización del alumbrado público con tecnología LED de bajo consumo",relevante
+"Factura N°1023 emitida por DOLMEN por concepto de reposición de lámparas de sodio en zona residencial",relevante
+"El equipo de DOLMEN realizó inspección nocturna para detectar puntos sin iluminación en la carretera central",relevante
+"Informe mensual de DOLMEN: 98% de operatividad del sistema de alumbrado público en el área urbana",relevante
+"DOLMEN solicita autorización para intervenir la red eléctrica del alumbrado en el parque central",relevante
+"Requerimiento técnico: los postes instalados por DOLMEN deben cumplir la norma NTC 2050 de instalaciones eléctricas",relevante
+"DOLMEN reporta daño en 12 luminarias causado por vandalismo en el barrio El Prado",relevante
+"Contrato de operación y mantenimiento del alumbrado público municipal firmado con DOLMEN por 5 años",relevante
+"DOLMEN entregó 300 luminarias LED como parte del plan de modernización del alumbrado vial",relevante
+"El sistema SCADA instalado por DOLMEN permite el monitoreo remoto de cada punto de luz en tiempo real",relevante
+"DOLMEN presenta balance energético: reducción del 35% en consumo eléctrico tras cambio a LED",relevante
+"Acta de interventoría aprueba los trabajos de DOLMEN en la ampliación del alumbrado del sector industrial",relevante
+"DOLMEN ejecuta mantenimiento correctivo en semáforos y alumbrado peatonal del centro histórico",relevante
+"Orden de trabajo N°456: reemplazo urgente de luminaria caída en la Calle 15 por parte de DOLMEN",relevante
+"DOLMEN instala celdas fotovoltaicas en zonas rurales sin acceso a red eléctrica para alumbrado autónomo",relevante
+"El municipio aprueba pago a DOLMEN por interventoría del alumbrado público correspondiente al primer trimestre",relevante
+"DOLMEN realiza capacitación a operarios en manejo seguro de plataformas elevadoras para cambio de luminarias",relevante
+"El restaurante El Rincón ofrece platos típicos de la región a precios accesibles para toda la familia",no_relevante
+"Se convoca a estudiantes de ingeniería a participar en el torneo universitario de robótica 2025",no_relevante
+"La secretaría de salud anuncia campaña de vacunación contra la influenza para adultos mayores",no_relevante
+"El equipo de fútbol local clasificó a la final del campeonato departamental tras vencer al rival",no_relevante
+"Se vende apartamento de 80 metros cuadrados en conjunto cerrado con piscina y zonas verdes",no_relevante
+"La empresa de acueducto informa corte de agua programado en el norte de la ciudad el día sábado",no_relevante
+"Convocatoria abierta para proveedores de papelería y útiles de oficina para el año fiscal 2025",no_relevante
+"El ministerio de educación publica nuevos lineamientos curriculares para educación básica primaria",no_relevante
+"Se inauguró el nuevo hospital regional con capacidad para 200 camas y atención de urgencias las 24 horas",no_relevante
+"Informe de gestión del departamento de recursos humanos: índice de rotación del personal en el semestre",no_relevante
+"La alcaldía reporta avance del 60% en obras de pavimentación de vías secundarias del municipio",no_relevante
+"Cotización de equipos de cómputo: 20 laptops con procesador Intel Core i5 y 16 GB de RAM",no_relevante
+"Se anuncia alza en el precio de los combustibles a partir del próximo mes según el ministerio de minas",no_relevante
+"El acueducto municipal presenta proyecto para ampliación de la red de alcantarillado en zonas periféricas",no_relevante
+"Reunión de padres de familia citada para el próximo viernes a las 6pm en el salón principal del colegio",no_relevante
+"La empresa de aseo urbano informa nuevo horario de recolección de residuos sólidos en la zona occidental",no_relevante
+"Convocatoria para artistas locales interesados en participar en el festival cultural del municipio",no_relevante
+"El banco ofrece créditos de libre inversión con tasas preferenciales para empleados públicos vinculados",no_relevante
+"Informe de inventario de vehículos: 3 camionetas en mantenimiento preventivo y 1 fuera de servicio",no_relevante
+"La junta de acción comunal solicita apoyo para adecuación de la cancha deportiva del barrio",no_relevante
