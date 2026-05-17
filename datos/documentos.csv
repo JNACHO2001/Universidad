@@ -1,0 +1,13 @@
+texto,etiqueta
+"El presente contrato tendrá vigencia de doce meses y establece las obligaciones de las partes",contrato
+"Las partes acuerdan confidencialidad y cumplimiento de las cláusulas",contrato
+"El valor total a pagar es de 500000 pesos e incluye IVA",factura
+"La factura electrónica debe pagarse antes de la fecha de vencimiento",factura
+"Para instalar el sistema siga los siguientes pasos",manual
+"Consulte este manual para configurar la aplicación",manual
+"El sistema debe permitir registrar usuarios y asignar roles",requerimientos
+"La aplicación debe validar el correo electrónico",requerimientos
+"Adjunto el informe mensual de ventas y resultados",informe
+"El informe presenta los indicadores del trimestre",informe
+"Estimado cliente, adjunto la información solicitada",correo
+"Por favor confirmar la recepción de este correo",correo
