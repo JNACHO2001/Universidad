@@ -99,25 +99,45 @@ class ServicioUsuarioTest {
         }
 
         @Test
-        @DisplayName("datos inválidos → lanza IllegalArgumentException (nombre vacío, email sin @, contraseña corta)")
-        void crear_lanzaExcepcionSiDatosInvalidos() {
-            // DADO: que el email no está duplicado (el error viene de los datos, no del repositorio)
-            given(repositorio.existePorEmail(any())).willReturn(false);
+        @DisplayName("nombre vacío → lanza IllegalArgumentException")
+        void crear_lanzaExcepcionSiNombreEsVacio() {
+            // DADO: que el email no está duplicado (el error viene del nombre, no del repositorio)
+            given(repositorio.existePorEmail("ana@mail.com")).willReturn(false);
 
-            // CUANDO / ENTONCES: nombre vacío → la entidad Usuario debe rechazarlo
+            // CUANDO: se intenta crear un usuario con nombre vacío
+            // ENTONCES: la entidad Usuario debe rechazarlo antes de guardar
             assertThatThrownBy(() ->
                 servicio.crear(new CrearUsuarioComando("", "ana@mail.com", "clave123", Rol.CLIENTE))
-            ).isInstanceOf(IllegalArgumentException.class);
+            ).isInstanceOf(IllegalArgumentException.class)
+             .hasMessageContaining("nombre");
+        }
 
-            // CUANDO / ENTONCES: email sin @ → formato inválido, debe rechazarse
+        @Test
+        @DisplayName("email sin @ → lanza IllegalArgumentException")
+        void crear_lanzaExcepcionSiEmailEsInvalido() {
+            // DADO: que el email no está duplicado (el error viene del formato, no del repositorio)
+            given(repositorio.existePorEmail("no-es-email")).willReturn(false);
+
+            // CUANDO: se intenta crear un usuario con email sin formato válido
+            // ENTONCES: la entidad Usuario debe rechazarlo antes de guardar
             assertThatThrownBy(() ->
                 servicio.crear(new CrearUsuarioComando("Ana", "no-es-email", "clave123", Rol.CLIENTE))
-            ).isInstanceOf(IllegalArgumentException.class);
+            ).isInstanceOf(IllegalArgumentException.class)
+             .hasMessageContaining("Email");
+        }
 
-            // CUANDO / ENTONCES: contraseña menor a 6 caracteres → insegura, debe rechazarse
+        @Test
+        @DisplayName("contraseña menor a 6 caracteres → lanza IllegalArgumentException")
+        void crear_lanzaExcepcionSiContrasenaEsCorta() {
+            // DADO: que el email no está duplicado (el error viene de la contraseña, no del repositorio)
+            given(repositorio.existePorEmail("ana@mail.com")).willReturn(false);
+
+            // CUANDO: se intenta crear un usuario con contraseña insegura (menos de 6 chars)
+            // ENTONCES: la entidad Usuario debe rechazarlo antes de guardar
             assertThatThrownBy(() ->
                 servicio.crear(new CrearUsuarioComando("Ana", "ana@mail.com", "123", Rol.CLIENTE))
-            ).isInstanceOf(IllegalArgumentException.class);
+            ).isInstanceOf(IllegalArgumentException.class)
+             .hasMessageContaining("contraseña");
         }
     }
 
