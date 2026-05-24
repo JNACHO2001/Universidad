@@ -1,5 +1,24 @@
 package com.sigr.usuarios.aplicacion;
 
+/**
+ * Tests unitarios de ServicioUsuario.
+ *
+ * Estrategia de prueba:
+ *   - Se usa Mockito para simular el repositorio, de modo que los tests
+ *     no dependan de base de datos ni de ninguna infraestructura externa.
+ *   - Cada test sigue la estructura DADO / CUANDO / ENTONCES:
+ *       DADO    → condición inicial del sistema antes de la acción
+ *       CUANDO  → acción que se ejecuta sobre el servicio
+ *       ENTONCES→ resultado esperado (valor retornado, excepción lanzada,
+ *                 o método del repositorio que debió o no debió llamarse)
+ *
+ * Cobertura:
+ *   crear()     → 3 tests (flujo feliz, email duplicado, datos inválidos)
+ *   actualizar()→ 4 tests (flujo feliz, ID inexistente, email duplicado, mismo email)
+ *   eliminar()  → 2 tests (flujo feliz, ID inexistente)
+ *   buscar()    → 2 tests (flujo feliz, ID inexistente)
+ */
+
 import com.sigr.usuarios.dominio.RepositorioUsuario;
 import com.sigr.usuarios.dominio.Rol;
 import com.sigr.usuarios.dominio.Usuario;
@@ -18,20 +37,28 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.*;
 
+// Activa Mockito: permite usar @Mock sin levantar Spring ni base de datos
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ServicioUsuario")
 class ServicioUsuarioTest {
 
+    // Repositorio simulado: reemplaza la implementación real para que
+    // los tests no dependan de ningún almacenamiento externo
     @Mock
     private RepositorioUsuario repositorio;
 
     private ServicioUsuario servicio;
 
+    // Se ejecuta antes de cada test: crea una instancia limpia del servicio
+    // inyectando el repositorio simulado
     @BeforeEach
     void setUp() {
         servicio = new ServicioUsuario(repositorio);
     }
 
+    // ================================================================
+    // CREAR USUARIO
+    // ================================================================
     @Nested
     @DisplayName("crear()")
     class Crear {
@@ -46,7 +73,7 @@ class ServicioUsuarioTest {
             String id = servicio.crear(new CrearUsuarioComando("Ana", "ana@mail.com", "clave123", Rol.CLIENTE));
 
             // ENTONCES: debe retornar un ID generado (no vacío)
-            //           y debe haber llamado a guardar() con el usuario correcto
+            //           y debe haber llamado a guardar() con los datos correctos
             assertThat(id).isNotBlank();
             ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
             then(repositorio).should().guardar(captor.capture());
@@ -62,7 +89,7 @@ class ServicioUsuarioTest {
 
             // CUANDO: se intenta crear otro usuario con el mismo email
             // ENTONCES: debe lanzar EmailDuplicadoException con el email en el mensaje
-            //           y NO debe llamar a guardar() bajo ninguna circunstancia
+            //           y NO debe llamar a guardar() para no crear registros duplicados
             assertThatThrownBy(() ->
                 servicio.crear(new CrearUsuarioComando("Ana", "ana@mail.com", "clave123", Rol.CLIENTE))
             ).isInstanceOf(EmailDuplicadoException.class)
@@ -77,7 +104,7 @@ class ServicioUsuarioTest {
             // DADO: que el email no está duplicado (el error viene de los datos, no del repositorio)
             given(repositorio.existePorEmail(any())).willReturn(false);
 
-            // CUANDO / ENTONCES: nombre vacío → debe rechazarse antes de guardar
+            // CUANDO / ENTONCES: nombre vacío → la entidad Usuario debe rechazarlo
             assertThatThrownBy(() ->
                 servicio.crear(new CrearUsuarioComando("", "ana@mail.com", "clave123", Rol.CLIENTE))
             ).isInstanceOf(IllegalArgumentException.class);
@@ -87,13 +114,16 @@ class ServicioUsuarioTest {
                 servicio.crear(new CrearUsuarioComando("Ana", "no-es-email", "clave123", Rol.CLIENTE))
             ).isInstanceOf(IllegalArgumentException.class);
 
-            // CUANDO / ENTONCES: contraseña menor a 6 caracteres → debe rechazarse
+            // CUANDO / ENTONCES: contraseña menor a 6 caracteres → insegura, debe rechazarse
             assertThatThrownBy(() ->
                 servicio.crear(new CrearUsuarioComando("Ana", "ana@mail.com", "123", Rol.CLIENTE))
             ).isInstanceOf(IllegalArgumentException.class);
         }
     }
 
+    // ================================================================
+    // ACTUALIZAR USUARIO
+    // ================================================================
     @Nested
     @DisplayName("actualizar()")
     class Actualizar {
@@ -109,7 +139,7 @@ class ServicioUsuarioTest {
             // CUANDO: se actualiza con nuevo nombre y nuevo email
             servicio.actualizar(new ActualizarUsuarioComando("id-1", "Ana Nueva", "nueva@mail.com", null, null));
 
-            // ENTONCES: el objeto usuario debe tener los nuevos valores
+            // ENTONCES: el objeto usuario debe reflejar los nuevos valores
             //           y debe haberse llamado a guardar() para persistir el cambio
             assertThat(existente.getNombre()).isEqualTo("Ana Nueva");
             assertThat(existente.getEmail()).isEqualTo("nueva@mail.com");
@@ -140,7 +170,7 @@ class ServicioUsuarioTest {
 
             // CUANDO: se intenta cambiar el email por uno que ya está registrado
             // ENTONCES: debe lanzar EmailDuplicadoException
-            //           y NO debe guardar para no sobreescribir datos
+            //           y NO debe guardar para evitar sobrescribir con datos inválidos
             assertThatThrownBy(() ->
                 servicio.actualizar(new ActualizarUsuarioComando("id-1", null, "otro@mail.com", null, null))
             ).isInstanceOf(EmailDuplicadoException.class);
@@ -151,20 +181,23 @@ class ServicioUsuarioTest {
         @Test
         @DisplayName("mismo email actual → no verifica duplicado y guarda correctamente")
         void actualizar_permiteMantenermismoEmail() {
-            // DADO: que el usuario id-1 existe y se actualiza con su mismo email
+            // DADO: que el usuario id-1 existe y se envía su mismo email en la actualización
             Usuario existente = new Usuario("id-1", "Ana", "ana@mail.com", "clave123", Rol.CLIENTE);
             given(repositorio.buscarPorId("id-1")).willReturn(Optional.of(existente));
 
-            // CUANDO: se actualiza el nombre pero se mantiene el mismo email
+            // CUANDO: se actualiza solo el nombre manteniendo el mismo email
             servicio.actualizar(new ActualizarUsuarioComando("id-1", "Ana Actualizada", "ana@mail.com", null, null));
 
-            // ENTONCES: no debe consultar existePorEmail (el email no cambió, no hay riesgo de duplicado)
-            //           y debe guardar los cambios
+            // ENTONCES: NO debe consultar existePorEmail (el email no cambió, no hay riesgo)
+            //           y debe guardar los cambios correctamente
             then(repositorio).should(never()).existePorEmail(any());
             then(repositorio).should().guardar(existente);
         }
     }
 
+    // ================================================================
+    // ELIMINAR USUARIO
+    // ================================================================
     @Nested
     @DisplayName("eliminar()")
     class Eliminar {
@@ -179,7 +212,7 @@ class ServicioUsuarioTest {
             // CUANDO: se solicita eliminar ese usuario
             servicio.eliminar("id-1");
 
-            // ENTONCES: debe llamar a eliminar() en el repositorio con ese ID
+            // ENTONCES: debe llamar a eliminar() en el repositorio con el ID correcto
             then(repositorio).should().eliminar("id-1");
         }
 
@@ -191,7 +224,7 @@ class ServicioUsuarioTest {
 
             // CUANDO: se intenta eliminar un usuario que no existe
             // ENTONCES: debe lanzar UsuarioNoEncontradoException
-            //           y NO debe llamar a eliminar() para evitar operaciones innecesarias
+            //           y NO debe llamar a eliminar() para evitar operaciones sobre nada
             assertThatThrownBy(() -> servicio.eliminar("id-inexistente"))
                 .isInstanceOf(UsuarioNoEncontradoException.class)
                 .hasMessageContaining("id-inexistente");
@@ -200,6 +233,9 @@ class ServicioUsuarioTest {
         }
     }
 
+    // ================================================================
+    // BUSCAR USUARIO
+    // ================================================================
     @Nested
     @DisplayName("buscar()")
     class Buscar {

@@ -1,23 +1,54 @@
+# ============================================================
+# Pipeline de Integración Continua (CI) - SIGR
+# ============================================================
+# Propósito:
+#   Ejecutar automáticamente los tests del proyecto cada vez
+#   que se sube código a GitHub, para detectar errores antes
+#   de que lleguen a la rama principal.
+#
+# Flujo:
+#   push/PR → checkout → instalar Java → mvn test → reporte
+# ============================================================
+
 name: CI - Tests
 
+# -------------------------------------------------------
+# DISPARADORES: cuándo se activa este pipeline
+# -------------------------------------------------------
 on:
   push:
+    # Se ejecuta en cualquier rama cuando se hace push
     branches: [ "**" ]
   pull_request:
+    # Se ejecuta cuando se abre un PR hacia esta rama
     branches: [ "gestion-software/unidad-3" ]
 
+# -------------------------------------------------------
+# TRABAJOS: tareas que ejecuta el pipeline
+# -------------------------------------------------------
 jobs:
   test:
     name: Compilar y ejecutar tests
+    # Máquina virtual donde corre el pipeline (Linux gratuito en GitHub)
     runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      contents: read
 
+    # Permisos necesarios para publicar resultados de tests en GitHub
+    permissions:
+      checks: write      # permite crear reportes de resultados
+      contents: read     # permite leer el código del repositorio
+
+    # -------------------------------------------------------
+    # PASOS: secuencia de acciones del pipeline
+    # -------------------------------------------------------
     steps:
+
+      # Paso 1: descarga el código del repositorio en la máquina virtual
       - name: Obtener código fuente
         uses: actions/checkout@v4
 
+      # Paso 2: instala Java 21 (Temurin = distribución open source de Eclipse)
+      #         cache: maven → guarda las dependencias descargadas para acelerar
+      #         los siguientes pipelines y no descargar todo desde cero cada vez
       - name: Configurar Java 21
         uses: actions/setup-java@v4
         with:
@@ -25,13 +56,20 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      # Paso 3: compila el proyecto y ejecuta todos los tests
+      #         Si algún test falla, Maven retorna error y el pipeline se marca ❌
       - name: Ejecutar tests
         run: mvn test
 
+      # Paso 4: publica los resultados en la pestaña Actions de GitHub
+      #         if: always() → se ejecuta aunque mvn test haya fallado,
+      #         para poder ver qué test específico causó el error
       - name: Publicar resultados de tests
         uses: dorny/test-reporter@v1
         if: always()
         with:
           name: Resultados JUnit
+          # Maven guarda los resultados en XML dentro de target/surefire-reports/
           path: target/surefire-reports/*.xml
+          # Formato de reporte: java-junit (estándar de JUnit 4 y 5)
           reporter: java-junit
