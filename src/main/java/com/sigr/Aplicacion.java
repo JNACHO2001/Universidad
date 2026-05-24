@@ -1,8 +1,11 @@
 package com.sigr;
 
-// Punto de entrada principal de la aplicación SIGR.
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class Aplicacion {
     public static void main(String[] args) {
-        // Inicialización pendiente
+        SpringApplication.run(Aplicacion.class, args);
     }
 }
